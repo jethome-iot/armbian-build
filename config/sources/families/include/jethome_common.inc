@@ -237,57 +237,207 @@ write_uboot_platform() {
 family_tweaks_bsp() {
 	mkdir -p $destination/etc/udev/rules.d
 	mkdir -p $destination/usr/local/bin
-
-	mkdir -p "$destination"/etc/X11/xorg.conf.d
-	case "${BOARD}" in
-		"odroidc2" | "nanopik2-s905" | "lepotato" | "lafrite" | "khadas-vim1" | "khadas-vim2" | "aml-s9xx-box")
-			cat <<- EOF > "$destination"/etc/X11/xorg.conf.d/02-driver.conf
-				Section "OutputClass"
-				    Identifier "Amlogic"
-				    MatchDriver "meson"
-				    Driver "modesetting"
-				    Option "PrimaryGPU" "true"
-				EndSection
-				Section "Screen"
-				    Identifier      "Default Screen"
-				    Device          "Meson"
-				    Monitor         "foo"
-				    DefaultDepth  24
-				    SubSection "Display"
-				       Depth    24
-				       Modes    "1920x1080" "1440x900" "1280x720" "1280x1024" "1280x960" "1024x768" "800x600" "640x480" "720x400"
-				    EndSubSection
-				EndSection
-			EOF
-			;;
-		"odroidn2" | "odroidc4" | "khadas-vim2" | "odroidhc4" | "khadas-vim3" | "khadas-vim3l" | "radxa-zero" | "radxa-zero2" | "bananapi-m2s")
-			cat <<- EOF > "$destination"/etc/X11/xorg.conf
-				Section "Device"
-				    Identifier  "DRM Graphics Acclerated"
-
-				    ## Use modesetting and glamor
-				        Driver      "modesetting"
-				        Option      "AccelMethod"    "glamor"     ### "glamor" to enable 3D acceleration, "none" to disable.
-				        Option      "DRI"            "2"
-				        Option      "Dri2Vsync"      "true"
-				        Option      "TripleBuffer"   "True"
-				    ## End glamor configuration
-
-				    EndSection
-
-				    Section "Screen"
-				        Identifier "Default Screen"
-				            SubSection "Display"
-				                Depth 24
-				            EndSubSection
-				        EndSection
-			EOF
-			;;
-	esac
 }
+
+# this helper function includes postprocess for s4 family.
+# $1 PATH for uboot blob repo
+uboot_s4_postprocess() {
+	# ENV
+	DEV_ACS_BIN_SIZE=4096
+	BL30_BIN_SIZE=65536
+	BL33_BIN_SIZE=1572864
+	BUILD_PATH="$1"
+
+	run_host_command_logged mv -v u-boot.bin bl33.bin
+
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	# functio mk_uboot
+	function mk_uboot () {
+		output_images=$1
+		input_payloads=$2
+		postfix=$3
+		storage_type_suffix=$4
+		chipset_variant_suffix=$5
+
+		device_fip="${input_payloads}/device-fip.bin${postfix}"
+		bb1st="${input_payloads}/bb1st${storage_type_suffix}${chipset_variant_suffix}.bin${postfix}"
+		bl2e="${input_payloads}/blob-bl2e${storage_type_suffix}${chipset_variant_suffix}.bin${postfix}"
+		bl2x="${input_payloads}/blob-bl2x.bin${postfix}"
+
+		if [ ! -f ${device_fip} ] || \
+		[ ! -f ${bb1st} ] || \
+		[ ! -f ${bl2e} ] || \
+		[ ! -f ${bl2x} ]; then
+			echo fip:${device_fip}
+			echo bb1st:${bb1st}
+			echo bl2e:${bl2e}
+			echo bl2x:${bl2x}
+			echo "Error: ${input_payloads}/ bootblob does not all exist... abort"
+			ls -la ${input_payloads}/
+			exit -1
+		fi
+
+		file_info_cfg="${output_images}/aml-payload.cfg"
+		file_info_cfg_temp=${temp_cfg}.temp
+
+		bootloader="${output_images}/u-boot.bin${storage_type_suffix}${postfix}"
+		sdcard_image="${output_images}/u-boot.bin.sd.bin${postfix}"
+
+		ddr_fip="${input_payloads}/ddr-fip.bin"
+
+		#cat those together with 4K upper aligned for sdcard
+		align_base=4096
+		total_size=0
+		for file in ${bb1st} ${bl2e} ${bl2x} ${ddr_fip} ${device_fip}; do
+			size=`stat -c "%s" ${file}`
+			upper=$[(size+align_base-1)/align_base*align_base]
+			total_size=$[total_size+upper]
+			echo ${file} ${size} ${upper}
+		done
+
+		echo ${total_size}
+		rm -f ${bootloader}
+		dd if=/dev/zero of=${bootloader} bs=${total_size} count=1 status=none
+
+		sector=512
+		seek=0
+		seek_sector=0
+		dateStamp=SC2-`date +%Y%m%d%H%M%S`
+
+		echo @AMLBOOT > ${file_info_cfg_temp}
+		dd if=${file_info_cfg_temp} of=${file_info_cfg} bs=1 count=8 conv=notrunc &> /dev/null
+		nItemNum=5
+		nSizeHDR=$[64+nItemNum*16]
+		printf "01 %02x %02x %02x 00 00 00 00" $[(nItemNum)&0xFF] $[(nSizeHDR)&0xFF] $[((nSizeHDR)>>8)&0xFF] \
+			| xxd -r -ps > ${file_info_cfg_temp}
+		cat ${file_info_cfg_temp} >> ${file_info_cfg}
+
+		echo ${dateStamp} > ${file_info_cfg_temp}
+		dd if=${file_info_cfg_temp} of=${file_info_cfg} bs=1 count=16 oflag=append conv=notrunc &> /dev/null
+
+		index=0
+		arrPayload=("BBST" "BL2E" "BL2X" "DDRF" "DEVF");
+		nPayloadOffset=0
+		nPayloadSize=0
+		for file in ${bb1st} ${bl2e} ${bl2x} ${ddr_fip} ${device_fip}; do
+			size=`stat -c "%s" ${file}`
+			size_sector=$[(size+align_base-1)/align_base*align_base]
+			nPayloadSize=$[size_sector]
+			size_sector=$[size_sector/sector]
+			seek_sector=$[seek/sector+seek_sector]
+			#nPayloadOffset=$[sector*(seek_sector+1)]
+			nPayloadOffset=$[sector*(seek_sector)]
+			echo ${file} ${seek_sector} ${size_sector}
+			dd if=${file} of=${bootloader} bs=${sector} seek=${seek_sector} conv=notrunc status=none
+
+			echo ${arrPayload[$index]} > ${file_info_cfg_temp}.x
+			index=$((index+1))
+			dd if=${file_info_cfg_temp}.x of=${file_info_cfg_temp} bs=1 count=4 &> /dev/null
+			rm -f ${file_info_cfg_temp}.x
+			printf "%02x %02x %02x %02x %02x %02x %02x %02x 00 00 00 00" $[(nPayloadOffset)&0xFF] $[((nPayloadOffset)>>8)&0xFF] $[((nPayloadOffset)>>16)&0xFF] $[((nPayloadOffset)>>24)&0xFF] \
+			$[(nPayloadSize)&0xFF] $[((nPayloadSize)>>8)&0xFF] $[((nPayloadSize)>>16)&0xFF] $[((nPayloadSize)>>24)&0xFF] | xxd -r -ps >> ${file_info_cfg_temp}
+			dd if=${file_info_cfg_temp} of=${file_info_cfg} oflag=append conv=notrunc &> /dev/null
+			rm -f ${file_info_cfg_temp}
+			seek=$[(size+align_base-1)/align_base*align_base]
+		done
+
+		run_host_x86_binary_logged openssl dgst -sha256 -binary ${file_info_cfg} > ${file_info_cfg}.sha256
+		cat ${file_info_cfg} >> ${file_info_cfg}.sha256
+		#cat ${file_info_cfg}.sha256 >> ${file_info_cfg}
+		rm -f ${file_info_cfg}
+		mv -f ${file_info_cfg}.sha256 ${file_info_cfg}
+
+		dd if=${file_info_cfg} of=${bootloader} bs=512 seek=332 conv=notrunc status=none
+
+		if [ ${storage_type_suffix} == ".sto" ]; then
+			echo "Image SDCARD"
+			total_size=$[total_size+512]
+			rm -f ${sdcard_image}
+			dd if=/dev/zero of=${sdcard_image} bs=${total_size} count=1 status=none
+			dd if=${file_info_cfg}   of=${sdcard_image} conv=notrunc status=none
+			dd if=${bootloader} of=${sdcard_image} bs=512 seek=1 conv=notrunc status=none
+
+			mv ${bootloader} ${output_images}/u-boot.bin${postfix}
+		fi
+
+		rm -f ${file_info_cfg}
+	}
+
+	# end funcrion mk_uboot
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	#! copy device_acs.bin to dbinit-params.bin
+	dev_acs_size=$(stat -c %s "$1/device_acs.bin")
+
+	if [ ${dev_acs_size} -gt ${DEV_ACS_BIN_SIZE} ]; then
+		echo "chip acs size exceed limit ${DEV_ACS_BIN_SIZE}, $dev_acs_size"
+		exit -1
+	fi
+	dd if=/dev/zero of=dvinit-params.bin bs=${DEV_ACS_BIN_SIZE} count=1 &> /dev/null
+	dd if="${BUILD_PATH}/device_acs.bin" of=dvinit-params.bin conv=notrunc &> /dev/null
+
+	#fill bb1st.* from 9600 (0x2580) with 4096 (0x1000) bytes with dbinit-params.bin
+
+	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.sto${CHIPSET_VARIANT_SUFFIX}.bin.signed ${BUILD_PATH}/dvinit-params.bin ${BUILD_PATH}/bb1st.sto${CHIPSET_VARIANT_SUFFIX}.bin.signed ${CUR_SOC}
+	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.usb${CHIPSET_VARIANT_SUFFIX}.bin.signed ${BUILD_PATH}/dvinit-params.bin ${BUILD_PATH}/bb1st.usb${CHIPSET_VARIANT_SUFFIX}.bin.signed ${CUR_SOC}
+
+	#Check bl30.bin < 64KB
+	# fill bl30-payload.bin with bl30.bin + zero bytes
+	dd if=/dev/zero of=bl30-payload.bin bs=${BL30_BIN_SIZE} count=1 &> /dev/null
+	dd if=${BUILD_PATH}/bl30.bin of=bl30-payload.bin conv=notrunc &> /dev/null
+
+
+	#if we use compression for u-boot (bl33)
+	if [ "y" == "y" ]; then
+		mv -f bl33.bin  bl33.bin.org
+		# echo compress bl33
+
+		run_host_x86_binary_logged "$1/aml_encrypt_s4" --bl3sig  --input bl33.bin.org --output bl33.bin.org.lz4 --compress lz4 \
+			--level v3 --type bl33
+
+		#get LZ4 format bl33 image from bl33.bin.enc with offset 0x720
+		dd if=bl33.bin.org.lz4 of=bl33.bin bs=1 skip=1824 >& /dev/null
+	fi
+
+	# max size of bl33 is 1572864
+	if [ ! -f ${BUILD_PATH}/bl33.bin ]; then
+		echo "Error: ${BUILD_PATH}/bl33.bin does not exist... abort"
+		exit -1
+	fi
+	blx_size=`stat -c %s ${BUILD_PATH}/bl33.bin`
+	if [ $blx_size -gt ${BL33_BIN_SIZE} ]; then
+		echo "Error: bl33 size exceed limit ${BL33_BIN_SIZE}"
+		exit -1
+	fi
+
+	dd if=/dev/zero of=bl33-payload.bin bs=${BL33_BIN_SIZE} count=1 &> /dev/null
+	dd if=bl33.bin of=bl33-payload.bin conv=notrunc &> /dev/null
+
+	# check blob-bl40.bin.signed
+	# check device-fip-header.bin
+
+	#create device-fip.bin.signed
+	run_host_x86_binary_logged "$1/binary-tool/acpu-imagetool" create-device-fip \
+		--infile-template-chipset-fip-header="$1/device-fip-header.bin" --infile-bl30-payload=bl30-payload.bin \
+		--infile-bl33-payload=bl33-payload.bin --infile-blob-bl40="$1/blob-bl40.bin.signed" \
+		--infile-blob-bl31="$1/blob-bl31.bin.signed" --infile-blob-bl32="$1/blob-bl32.bin.signed" \
+		--outfile-device-fip=device-fip.bin.signed
+
+	#fake ddr fip 256KB
+	echo "==== use empty ddr-fip ===="
+	dd if=/dev/zero of=ddr-fip.bin bs=1024 count=256 status=none
+
+	#create u-boot sdcard
+	mk_uboot fip/_tmp fip/_tmp .signed .sto
+
+	#create u-boot usb
+	mk_uboot fip/_tmp fip/_tmp .signed .usb
+
+}
+
 
 # This is an extension method, put directly in meson64_common. A "built-in" extension if you will.
 # If used in more than one place, it could be moved to an extension: enable_extension "amlogic-fip-tools"
 function fetch_sources_tools__amlogic_fip() {
-	fetch_from_repo "https://github.com/jethome-iot/amlogic-boot-fip" "amlogic-boot-fip" "branch:master"
+	fetch_from_repo "https://github.com/jethome-iot/amlogic-boot-fip" "amlogic-boot-fip" "branch:jethub_j82"
 }
