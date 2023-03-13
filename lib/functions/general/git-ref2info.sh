@@ -76,6 +76,7 @@ function memoized_git_ref_to_info() {
 					;;
 
 				*)
+					return 1
 					exit_with_error "Unknown git source '${git_source}'"
 					;;
 			esac
@@ -125,7 +126,7 @@ function memoized_git_ref_to_info() {
 		display_alert "Fetching Makefile body" "${ref_name}" "debug"
 		declare makefile_body makefile_url
 		declare makefile_version makefile_codename makefile_full_version
-		obtain_makefile_body_from_git "${MEMO_DICT[GIT_SOURCE]}" "${sha1}"
+		obtain_makefile_body_from_git "${MEMO_DICT[GIT_SOURCE]}" "${sha1}" || makefile_version="0.0.0" && makefile_fuoo_version="0.0.0-nc"
 		MEMO_DICT+=(["MAKEFILE_URL"]="${makefile_url}")
 		#MEMO_DICT+=(["MAKEFILE_BODY"]="${makefile_body}") # large, don't store
 		MEMO_DICT+=(["MAKEFILE_VERSION"]="${makefile_version}")
