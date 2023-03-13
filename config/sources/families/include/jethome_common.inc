@@ -31,7 +31,12 @@ case $BRANCH in
 		KERNELBRANCH='branch:linux-6.2.y'     # @TODO: soon-to-be 'branch:linux-6.2.y' when it is released
 		KERNELPATCHDIR='jethome64-edge'
 		;;
-
+	legacy)
+		export KERNEL_MAJOR_MINOR="5.4"
+		KERNELSOURCE='https://github.com/jethome-iot/linux-kernel'
+		KERNELBRANCH='branch:linux-amlogic-5.4-jethub'
+		KERNELPATCHDIR='jethome64-legacy'
+		;;
 esac
 
 # this helper function includes postprocess for p212 and its variants.
@@ -243,12 +248,14 @@ family_tweaks_bsp() {
 # $1 PATH for uboot blob repo
 uboot_s4_postprocess() {
 	# ENV
+	CUR_SOC="s4"
 	DEV_ACS_BIN_SIZE=4096
 	BL30_BIN_SIZE=65536
 	BL33_BIN_SIZE=1572864
 	BUILD_PATH="$1"
 
-	run_host_command_logged mv -v u-boot.bin bl33.bin
+	run_host_command_logged mv -v u-boot.bin bl33.bin || mv -v build/u-boot.bin bl33.bin
+	run_host_command_logged cp -v build/u-boot-dtb.img u-boot-dtb.img || true
 
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	# functio mk_uboot
@@ -341,14 +348,16 @@ uboot_s4_postprocess() {
 			seek=$[(size+align_base-1)/align_base*align_base]
 		done
 
-		run_host_x86_binary_logged openssl dgst -sha256 -binary ${file_info_cfg} > ${file_info_cfg}.sha256
+		display_alert "!!!!! after dd/rm/dd/rm/seek"
+		run_host_command_logged openssl dgst -sha256 -binary "${file_info_cfg}" > "${file_info_cfg}.sha256"
+		ls "${file_info_cfg}.sha256"
 		cat ${file_info_cfg} >> ${file_info_cfg}.sha256
-		#cat ${file_info_cfg}.sha256 >> ${file_info_cfg}
 		rm -f ${file_info_cfg}
 		mv -f ${file_info_cfg}.sha256 ${file_info_cfg}
 
-		dd if=${file_info_cfg} of=${bootloader} bs=512 seek=332 conv=notrunc status=none
+		dd if="${file_info_cfg}" of="${bootloader}" bs=512 seek=332 conv=notrunc status=none
 
+		display_alert "!!!!! before last"
 		if [ ${storage_type_suffix} == ".sto" ]; then
 			echo "Image SDCARD"
 			total_size=$[total_size+512]
@@ -378,33 +387,33 @@ uboot_s4_postprocess() {
 
 	#fill bb1st.* from 9600 (0x2580) with 4096 (0x1000) bytes with dbinit-params.bin
 
-	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.sto${CHIPSET_VARIANT_SUFFIX}.bin.signed ${BUILD_PATH}/dvinit-params.bin ${BUILD_PATH}/bb1st.sto${CHIPSET_VARIANT_SUFFIX}.bin.signed ${CUR_SOC}
-	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.usb${CHIPSET_VARIANT_SUFFIX}.bin.signed ${BUILD_PATH}/dvinit-params.bin ${BUILD_PATH}/bb1st.usb${CHIPSET_VARIANT_SUFFIX}.bin.signed ${CUR_SOC}
+	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.sto.bin.signed dvinit-params.bin ${BUILD_PATH}/bb1st.sto.bin.signed ${CUR_SOC}
+	"${BUILD_PATH}/bin/add-dvinit-params.sh" ${BUILD_PATH}/bb1st.usb.bin.signed dvinit-params.bin ${BUILD_PATH}/bb1st.usb.bin.signed ${CUR_SOC}
 
 	#Check bl30.bin < 64KB
 	# fill bl30-payload.bin with bl30.bin + zero bytes
 	dd if=/dev/zero of=bl30-payload.bin bs=${BL30_BIN_SIZE} count=1 &> /dev/null
 	dd if=${BUILD_PATH}/bl30.bin of=bl30-payload.bin conv=notrunc &> /dev/null
 
-
 	#if we use compression for u-boot (bl33)
 	if [ "y" == "y" ]; then
-		mv -f bl33.bin  bl33.bin.org
+		mv -f bl33.bin  ${BUILD_PATH}/bl33.bin.org
 		# echo compress bl33
-
-		run_host_x86_binary_logged "$1/aml_encrypt_s4" --bl3sig  --input bl33.bin.org --output bl33.bin.org.lz4 --compress lz4 \
-			--level v3 --type bl33
-
+		curdir="$(pwd)"
+		display_alert "compress bl33 $(pwd) ! ${BUILD_PATH}"
+		display_alert "${BUILD_PATH}/aml_encrypt_s4 --bl3sig --input ${BUILD_PATH}/bl33.bin.org --output ${BUILD_PATH}/bl33.bin.org.lz4 --compress lz4 --level v3 --type bl33 !!!"
+		#run_host_x86_binary_logged ${BUILD_PATH}/aml_encrypt_s4 --bl3sig --input ${BUILD_PATH}/bl33.bin.org --output ${curdir}/bl33.bin.org.lz4 --compress lz4 --level v3 --type bl33
+		run_host_x86_binary_logged ${BUILD_PATH}/aml_encrypt_s4 --bl3sig --input ${BUILD_PATH}/bl33.bin.org --output ${BUILD_PATH}/bl33.bin.org.lz4 --compress lz4 --level v3 --type bl33
 		#get LZ4 format bl33 image from bl33.bin.enc with offset 0x720
-		dd if=bl33.bin.org.lz4 of=bl33.bin bs=1 skip=1824 >& /dev/null
+		dd if=${BUILD_PATH}/bl33.bin.org.lz4 of=bl33.bin bs=1 skip=1824 >& /dev/null
 	fi
 
 	# max size of bl33 is 1572864
-	if [ ! -f ${BUILD_PATH}/bl33.bin ]; then
-		echo "Error: ${BUILD_PATH}/bl33.bin does not exist... abort"
+	if [ ! -f bl33.bin ]; then
+		echo "Error: bl33.bin does not exist... abort"
 		exit -1
 	fi
-	blx_size=`stat -c %s ${BUILD_PATH}/bl33.bin`
+	blx_size=`stat -c %s bl33.bin`
 	if [ $blx_size -gt ${BL33_BIN_SIZE} ]; then
 		echo "Error: bl33 size exceed limit ${BL33_BIN_SIZE}"
 		exit -1
@@ -417,21 +426,25 @@ uboot_s4_postprocess() {
 	# check device-fip-header.bin
 
 	#create device-fip.bin.signed
-	run_host_x86_binary_logged "$1/binary-tool/acpu-imagetool" create-device-fip \
-		--infile-template-chipset-fip-header="$1/device-fip-header.bin" --infile-bl30-payload=bl30-payload.bin \
-		--infile-bl33-payload=bl33-payload.bin --infile-blob-bl40="$1/blob-bl40.bin.signed" \
-		--infile-blob-bl31="$1/blob-bl31.bin.signed" --infile-blob-bl32="$1/blob-bl32.bin.signed" \
-		--outfile-device-fip=device-fip.bin.signed
+	run_host_x86_binary_logged "${BUILD_PATH}/binary-tool/acpu-imagetool" create-device-fip \
+		--infile-template-chipset-fip-header="${BUILD_PATH}/device-fip-header.bin" --infile-bl30-payload=bl30-payload.bin \
+		--infile-bl33-payload=bl33-payload.bin --infile-blob-bl40="${BUILD_PATH}/blob-bl40.bin.signed" \
+		--infile-blob-bl31="${BUILD_PATH}/blob-bl31.bin.signed" --infile-blob-bl32="${BUILD_PATH}/blob-bl32.bin.signed" \
+		--outfile-device-fip=${BUILD_PATH}/device-fip.bin.signed
 
 	#fake ddr fip 256KB
 	echo "==== use empty ddr-fip ===="
-	dd if=/dev/zero of=ddr-fip.bin bs=1024 count=256 status=none
+	dd if=/dev/zero of=${BUILD_PATH}/ddr-fip.bin bs=1024 count=256 status=none
 
 	#create u-boot sdcard
-	mk_uboot fip/_tmp fip/_tmp .signed .sto
+	mk_uboot $(pwd) ${BUILD_PATH} .signed .sto
 
 	#create u-boot usb
-	mk_uboot fip/_tmp fip/_tmp .signed .usb
+	mk_uboot $(pwd) ${BUILD_PATH} .signed .usb
+
+	mv u-boot.bin.sd.bin.signed u-boot.bin.sd.bin
+	mv u-boot.bin.signed u-boot.bin
+	mv u-boot.bin.usb.signed u-boot.bin.usb
 
 }
 
