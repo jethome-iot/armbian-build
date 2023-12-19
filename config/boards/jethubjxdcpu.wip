@@ -1,0 +1,10 @@
+# Allwinner T113-S3 dual core Cortex-A7 128Mb RAM SoC
+BOARD_NAME="JXD CPU Board A1C1"
+BOARDFAMILY="jethubalw"
+BOARD_MAINTAINER="adeepn"
+BOOTCONFIG="jethub_jxd_a1c1_defconfig"
+#DEFAULT_OVERLAYS="analog-codec"
+SERIALCON="ttyS3"
+KERNEL_TARGET="edge"
+SRC_CMDLINE="console=ttyS3,115200 earlyprintk=sunxi-uart,0x2500c00 cma=48M rootflags=data=writeback rw"
+BOOT_FDT_FILE="allwinner/sun8i-t113s-jxd-cpu-a1c1.dtb"
