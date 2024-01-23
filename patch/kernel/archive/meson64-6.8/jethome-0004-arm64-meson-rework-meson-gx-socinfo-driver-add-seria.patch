@@ -1,0 +1,254 @@
+From 1640382f5e1d45f619ca75cc0bf386412295de82 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Fri, 10 Nov 2023 10:32:02 +0300
+Subject: [PATCH 4/5] arm64: meson: rework meson-gx-socinfo driver, add
+ serial_number support
+
+Rework Amlogic Meson GX SoC Information driver, add support for
+secure-monitor for get serial_number (chipid v2), supported on
+GX and newer platforms.
+
+Signed-off-by: Viacheslav Bocharov <adeep@lexina.in>
+---
+ drivers/soc/amlogic/Kconfig            |   1 +
+ drivers/soc/amlogic/meson-gx-socinfo.c | 150 ++++++++++++++++++++-----
+ 2 files changed, 120 insertions(+), 31 deletions(-)
+
+diff --git a/drivers/soc/amlogic/Kconfig b/drivers/soc/amlogic/Kconfig
+index d08e398bdad4..7cb8259bb91c 100644
+--- a/drivers/soc/amlogic/Kconfig
++++ b/drivers/soc/amlogic/Kconfig
+@@ -22,6 +22,7 @@ config MESON_GX_SOCINFO
+ 	depends on (ARM64 && ARCH_MESON) || COMPILE_TEST
+ 	default ARCH_MESON
+ 	select SOC_BUS
++	select MESON_SM
+ 	help
+ 	  Say yes to support decoding of Amlogic Meson GX SoC family
+ 	  information about the type, package and version.
+diff --git a/drivers/soc/amlogic/meson-gx-socinfo.c b/drivers/soc/amlogic/meson-gx-socinfo.c
+index 6abb730344ab..03c0bc72f94f 100644
+--- a/drivers/soc/amlogic/meson-gx-socinfo.c
++++ b/drivers/soc/amlogic/meson-gx-socinfo.c
+@@ -1,8 +1,10 @@
++// SPDX-License-Identifier: GPL-2.0
+ /*
+  * Copyright (c) 2017 BayLibre, SAS
+- * Author: Neil Armstrong <narmstrong@baylibre.com>
++ * Copyright (c) 2023 JetHome
++ * Author: Neil Armstrong <neil.armstrong@linaro.org>
++ * Author: Viacheslav Bocharov <adeep@lexina.in>
+  *
+- * SPDX-License-Identifier: GPL-2.0+
+  */
+ 
+ #include <linux/io.h>
+@@ -16,6 +18,8 @@
+ #include <linux/regmap.h>
+ #include <linux/mfd/syscon.h>
+ 
++#include <linux/firmware/meson/meson_sm.h>
++
+ #define AO_SEC_SD_CFG8		0xe0
+ #define AO_SEC_SOCINFO_OFFSET	AO_SEC_SD_CFG8
+ 
+@@ -63,6 +67,7 @@ static const struct meson_gx_package_id {
+ 	{ "962X", 0x24, 0x10, 0xf0 },
+ 	{ "962E", 0x24, 0x20, 0xf0 },
+ 	{ "A113X", 0x25, 0x37, 0xff },
++	{ "A113X", 0x25, 0x43, 0xff },
+ 	{ "A113D", 0x25, 0x22, 0xff },
+ 	{ "S905D2", 0x28, 0x10, 0xf0 },
+ 	{ "S905Y2", 0x28, 0x30, 0xf0 },
+@@ -125,41 +130,89 @@ static const char *socinfo_to_soc_id(u32 socinfo)
+ 	return "Unknown";
+ }
+ 
+-static int __init meson_gx_socinfo_init(void)
++#define SM_CHIP_ID_LENGTH	128
++#define SM_CHIP_ID_OFFSET	4
++
++static char *socinfo_get_cpuid(struct device *dev, struct meson_sm_firmware *fw, unsigned int socinfo)
++{
++	char *buf;
++	uint8_t *id_buf;
++	int chip_id_version;
++	int ret;
++
++	id_buf = kmalloc(SM_CHIP_ID_LENGTH, GFP_KERNEL);
++	if (!id_buf)
++		return NULL;
++
++	ret = meson_sm_call_read(fw, id_buf, SM_CHIP_ID_LENGTH, SM_GET_CHIP_ID,
++				 2, 0, 0, 0, 0);
++	if (ret < 0) {
++		kfree(id_buf);
++		return NULL;
++	}
++
++	chip_id_version = *((unsigned int *)id_buf);
++
++	if (chip_id_version != 2)
++	{
++		uint8_t tmp;
++		/**
++		 * Legacy 12-byte chip ID read out, transform data
++		 * to expected order format
++		 */
++
++		memmove(&id_buf[SM_CHIP_ID_OFFSET + 4], &id_buf[SM_CHIP_ID_OFFSET], 12);
++		for (int i = 0; i < 6; i++)
++		{
++			tmp = id_buf[i + SM_CHIP_ID_OFFSET + 4];
++			id_buf[i + SM_CHIP_ID_OFFSET + 4] = id_buf[15 - i + SM_CHIP_ID_OFFSET];
++			id_buf[15 - i + SM_CHIP_ID_OFFSET] = tmp;
++		}
++		*(uint32_t *)(id_buf + SM_CHIP_ID_OFFSET) = socinfo;
++	}
++
++	buf = kasprintf(GFP_KERNEL, "%16phN\n", &id_buf[SM_CHIP_ID_OFFSET]);
++	kfree(id_buf);
++
++	return buf;
++}
++
++static int meson_gx_socinfo_probe(struct platform_device *pdev)
+ {
+ 	struct soc_device_attribute *soc_dev_attr;
+ 	struct soc_device *soc_dev;
+-	struct device_node *np;
++	struct device_node *sm_np;
++	bool sm_exists;
++	struct meson_sm_firmware *fw;
+ 	struct regmap *regmap;
+ 	unsigned int socinfo;
+ 	struct device *dev;
+ 	int ret;
+ 
+-	/* look up for chipid node */
+-	np = of_find_compatible_node(NULL, NULL, "amlogic,meson-gx-ao-secure");
+-	if (!np)
+-		return -ENODEV;
+-
+-	/* check if interface is enabled */
+-	if (!of_device_is_available(np)) {
+-		of_node_put(np);
+-		return -ENODEV;
+-	}
+-
+ 	/* check if chip-id is available */
+-	if (!of_property_read_bool(np, "amlogic,has-chip-id")) {
+-		of_node_put(np);
++	if (!of_property_read_bool(pdev->dev.of_node, "amlogic,has-chip-id")) {
+ 		return -ENODEV;
+ 	}
+ 
+ 	/* node should be a syscon */
+-	regmap = syscon_node_to_regmap(np);
+-	of_node_put(np);
++	regmap = syscon_node_to_regmap(pdev->dev.of_node);
+ 	if (IS_ERR(regmap)) {
+-		pr_err("%s: failed to get regmap\n", __func__);
++		dev_err(&pdev->dev, "failed to get regmap\n");
+ 		return -ENODEV;
+ 	}
+ 
++	sm_exists = true;
++	sm_np = of_parse_phandle(pdev->dev.of_node, "secure-monitor", 0);
++	if (!sm_np) {
++		dev_err(&pdev->dev, "no secure-monitor node found\n");
++		sm_exists = false;
++	} else {
++		fw = meson_sm_get(sm_np);
++		of_node_put(sm_np);
++		if (!fw)
++			return -EPROBE_DEFER;
++	}
++
+ 	ret = regmap_read(regmap, AO_SEC_SOCINFO_OFFSET, &socinfo);
+ 	if (ret < 0)
+ 		return ret;
+@@ -169,20 +222,24 @@ static int __init meson_gx_socinfo_init(void)
+ 		return -EINVAL;
+ 	}
+ 
+-	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
++	soc_dev_attr = devm_kzalloc(&pdev->dev, sizeof(*soc_dev_attr),
++				    GFP_KERNEL);
+ 	if (!soc_dev_attr)
+-		return -ENODEV;
++		return -ENOMEM;
+ 
+ 	soc_dev_attr->family = "Amlogic Meson";
+-	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "%x:%x - %x:%x",
+-					   socinfo_to_major(socinfo),
+-					   socinfo_to_minor(socinfo),
+-					   socinfo_to_pack(socinfo),
+-					   socinfo_to_misc(socinfo));
+-	soc_dev_attr->soc_id = kasprintf(GFP_KERNEL, "%s (%s)",
+-					 socinfo_to_soc_id(socinfo),
+-					 socinfo_to_package_id(socinfo));
+ 
++	soc_dev_attr->revision = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%x:%x - %x:%x",
++						socinfo_to_major(socinfo),
++						socinfo_to_minor(socinfo),
++						socinfo_to_pack(socinfo),
++						socinfo_to_misc(socinfo));
++	soc_dev_attr->soc_id = devm_kasprintf(&pdev->dev, GFP_KERNEL, "%s (%s)",
++					      socinfo_to_soc_id(socinfo),
++					      socinfo_to_package_id(socinfo));
++
++	if(sm_exists)
++		soc_dev_attr->serial_number = socinfo_get_cpuid(dev, fw, socinfo);
+ 	soc_dev = soc_device_register(soc_dev_attr);
+ 	if (IS_ERR(soc_dev)) {
+ 		kfree(soc_dev_attr->revision);
+@@ -191,6 +248,7 @@ static int __init meson_gx_socinfo_init(void)
+ 		return PTR_ERR(soc_dev);
+ 	}
+ 	dev = soc_device_to_device(soc_dev);
++	platform_set_drvdata(pdev, soc_dev);
+ 
+ 	dev_info(dev, "Amlogic Meson %s Revision %x:%x (%x:%x) Detected\n",
+ 			soc_dev_attr->soc_id,
+@@ -199,6 +257,36 @@ static int __init meson_gx_socinfo_init(void)
+ 			socinfo_to_pack(socinfo),
+ 			socinfo_to_misc(socinfo));
+ 
++	return PTR_ERR_OR_ZERO(dev);
++}
++
++static int meson_gx_socinfo_remove(struct platform_device *pdev)
++{
++	struct soc_device *soc_dev = platform_get_drvdata(pdev);
++
++	soc_device_unregister(soc_dev);
++
+ 	return 0;
+ }
+-device_initcall(meson_gx_socinfo_init);
++
++static const struct of_device_id meson_gx_socinfo_match[] = {
++	{ .compatible = "amlogic,meson-gx-ao-secure", },
++	{ /* sentinel */ },
++};
++MODULE_DEVICE_TABLE(of, meson_gx_socinfo_match);
++
++static struct platform_driver meson_gx_socinfo_driver = {
++	.probe = meson_gx_socinfo_probe,
++	.remove	= meson_gx_socinfo_remove,
++	.driver = {
++		.name = "meson-gx-socinfo",
++		.of_match_table = meson_gx_socinfo_match,
++	},
++};
++
++module_platform_driver(meson_gx_socinfo_driver);
++
++MODULE_AUTHOR("Neil Armstrong <neil.armstrong@linaro.org>");
++MODULE_AUTHOR("Viacheslav Bocharov <adeep@lexina.in>");
++MODULE_DESCRIPTION("Amlogic Meson GX SOC driver");
++MODULE_LICENSE("GPL v2");
+-- 
+2.34.1
+

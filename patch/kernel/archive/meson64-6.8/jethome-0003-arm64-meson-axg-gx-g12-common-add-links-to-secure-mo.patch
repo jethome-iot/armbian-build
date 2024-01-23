@@ -1,0 +1,55 @@
+From 3422264a5dfb77d5fc5344da094218dd3ce6f2de Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Fri, 10 Nov 2023 10:08:55 +0300
+Subject: [PATCH 3/5] arm64: meson: axg: gx: g12-common: add links to
+ secure-monitor from sec_AO
+
+Add the links to secure-monitor from sec_AO (amlogic,meson-gx-ao-secure) to
+show cpuid in serial_number soc device.
+
+Signed-off-by: Viacheslav Bocharov <adeep@lexina.in>
+---
+ arch/arm64/boot/dts/amlogic/meson-axg.dtsi        | 1 +
+ arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi | 1 +
+ arch/arm64/boot/dts/amlogic/meson-gx.dtsi         | 1 +
+ 3 files changed, 3 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-axg.dtsi b/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
+index 01fa5d42c74d..74e0510f7f3a 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-axg.dtsi
+@@ -1661,6 +1661,7 @@ mux {
+ 			sec_AO: ao-secure@140 {
+ 				compatible = "amlogic,meson-gx-ao-secure", "syscon";
+ 				reg = <0x0 0x140 0x0 0x140>;
++				secure-monitor = <&sm>;
+ 				amlogic,has-chip-id;
+ 			};
+ 
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
+index 64ca8767cb83..c7e78ae7933d 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-g12-common.dtsi
+@@ -2051,6 +2051,7 @@ cec_AO: cec@100 {
+ 			sec_AO: ao-secure@140 {
+ 				compatible = "amlogic,meson-gx-ao-secure", "syscon";
+ 				reg = <0x0 0x140 0x0 0x140>;
++				secure-monitor = <&sm>;
+ 				amlogic,has-chip-id;
+ 			};
+ 
+diff --git a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
+index 81ac2bff38fe..87b1890d2ab1 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-gx.dtsi
+@@ -480,6 +480,7 @@ cec_AO: cec@100 {
+ 			sec_AO: ao-secure@140 {
+ 				compatible = "amlogic,meson-gx-ao-secure", "syscon";
+ 				reg = <0x0 0x140 0x0 0x140>;
++				secure-monitor = <&sm>;
+ 				amlogic,has-chip-id;
+ 			};
+ 
+-- 
+2.34.1
+
