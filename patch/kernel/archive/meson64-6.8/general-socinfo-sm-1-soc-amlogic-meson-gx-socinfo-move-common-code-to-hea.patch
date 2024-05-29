@@ -1,16 +1,18 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From ec89c6b4e5b529a7c40edf0efe7fb8e4d0faa274 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <adeep@lexina.in>
 Date: Wed, 21 Feb 2024 16:35:01 +0300
-Subject: soc: amlogic: meson-gx-socinfo: move common code to header file
+Subject: [PATCH 1/6] soc: amlogic: meson-gx-socinfo: move common code to
+ header file
 
 Move common constants and inline functions from meson-gx-socinfo driver
 to header file. Create new structures for store meson64 cpu_id and chip_id.
 
 Signed-off-by: Viacheslav Bocharov <adeep@lexina.in>
 ---
- drivers/soc/amlogic/meson-gx-socinfo-internal.h | 120 ++++++++
- drivers/soc/amlogic/meson-gx-socinfo.c          | 136 +---------
+ .../soc/amlogic/meson-gx-socinfo-internal.h   | 120 ++++++++++++++++
+ drivers/soc/amlogic/meson-gx-socinfo.c        | 136 ++----------------
  2 files changed, 134 insertions(+), 122 deletions(-)
+ create mode 100644 drivers/soc/amlogic/meson-gx-socinfo-internal.h
 
 diff --git a/drivers/soc/amlogic/meson-gx-socinfo-internal.h b/drivers/soc/amlogic/meson-gx-socinfo-internal.h
 new file mode 100644
@@ -321,5 +323,5 @@ index 6abb730344ab..006f3b09940d 100644
  	return 0;
  }
 -- 
-Armbian
+2.45.1
 

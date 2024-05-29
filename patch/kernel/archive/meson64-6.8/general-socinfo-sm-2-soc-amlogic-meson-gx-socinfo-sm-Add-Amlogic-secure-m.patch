@@ -1,8 +1,8 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From df49173a60c58715494507ab76c9b17433382c46 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <adeep@lexina.in>
 Date: Wed, 21 Feb 2024 16:41:30 +0300
-Subject: soc: amlogic: meson-gx-socinfo-sm: Add Amlogic secure-monitor SoC
- Information driver
+Subject: [PATCH 2/6] soc: amlogic: meson-gx-socinfo-sm: Add Amlogic
+ secure-monitor SoC Information driver
 
 Amlogic SoCs have a SoC information secure-monitor call for SoC type,
 package type, revision information and chipid.
@@ -12,10 +12,11 @@ Information driver.
 
 Signed-off-by: Viacheslav Bocharov <adeep@lexina.in>
 ---
- drivers/soc/amlogic/Kconfig               |  10 +
+ drivers/soc/amlogic/Kconfig               |  10 ++
  drivers/soc/amlogic/Makefile              |   1 +
- drivers/soc/amlogic/meson-gx-socinfo-sm.c | 192 ++++++++++
- 3 files changed, 203 insertions(+)
+ drivers/soc/amlogic/meson-gx-socinfo-sm.c | 189 ++++++++++++++++++++++
+ 3 files changed, 200 insertions(+)
+ create mode 100644 drivers/soc/amlogic/meson-gx-socinfo-sm.c
 
 diff --git a/drivers/soc/amlogic/Kconfig b/drivers/soc/amlogic/Kconfig
 index d08e398bdad4..82fc77ca3b4b 100644
@@ -50,10 +51,10 @@ index c25f835e6a26..45d9d6f5904c 100644
  obj-$(CONFIG_MESON_MX_SOCINFO) += meson-mx-socinfo.o
 diff --git a/drivers/soc/amlogic/meson-gx-socinfo-sm.c b/drivers/soc/amlogic/meson-gx-socinfo-sm.c
 new file mode 100644
-index 000000000000..e30e1d2feb61
+index 000000000000..081519ca3089
 --- /dev/null
 +++ b/drivers/soc/amlogic/meson-gx-socinfo-sm.c
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,189 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +/*
 + * Copyright (c) 2017 BayLibre, SAS
@@ -84,7 +85,7 @@ index 000000000000..e30e1d2feb61
 +	struct meson_sm_chip_id *id_buf;
 +	int ret;
 +
-+	id_buf = devm_kzalloc(dev, sizeof(struct meson_sm_chip_id)+1, GFP_KERNEL);
++	id_buf = kzalloc(sizeof(struct meson_sm_chip_id)+1, GFP_KERNEL);
 +	if (!id_buf)
 +		return NULL;
 +
@@ -149,21 +150,19 @@ index 000000000000..e30e1d2feb61
 +
 +	/* node should be a syscon */
 +	regmap = syscon_node_to_regmap(pdev->dev.of_node);
-+	if (IS_ERR(regmap)) {
-+		dev_err(&pdev->dev, "failed to get regmap\n");
-+		return -ENODEV;
-+	}
++	if (IS_ERR(regmap))
++		return dev_err_probe(&pdev->dev, PTR_ERR (regmap), "failed to get regmap\n");
 +
 +	sm_np = of_parse_phandle(pdev->dev.of_node, "secure-monitor", 0);
 +	if (!sm_np) {
 +		dev_err(&pdev->dev, "no secure-monitor node found\n");
-+		return -ENODEV;
++		return -EINVAL;
 +	}
 +
 +	fw = meson_sm_get(sm_np);
 +	of_node_put(sm_np);
 +	if (!fw) {
-+		dev_info(&pdev->dev, "secure-monitor device not ready, probe later\n");
++		dev_dbg(&pdev->dev, "secure-monitor device not ready, probe later\n");
 +		return -EPROBE_DEFER;
 +	}
 +
@@ -199,7 +198,6 @@ index 000000000000..e30e1d2feb61
 +	if (IS_ERR(soc_dev)) {
 +		kfree(soc_dev_attr->revision);
 +		kfree_const(soc_dev_attr->soc_id);
-+		kfree(soc_dev_attr);
 +		return PTR_ERR(soc_dev);
 +	}
 +
@@ -247,5 +245,5 @@ index 000000000000..e30e1d2feb61
 +MODULE_DESCRIPTION("Amlogic Meson GX SOC SM driver");
 +MODULE_LICENSE("GPL");
 -- 
-Armbian
+2.45.1
 
