@@ -1,7 +1,7 @@
-From 7160af7b3b2a2a7fedb9104bcdefddf114467358 Mon Sep 17 00:00:00 2001
+From 1f8ce6084982cf35ebf51335fdf52c777c267df8 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <adeep@lexina.in>
 Date: Mon, 22 Jan 2024 18:38:08 +0300
-Subject: [PATCH 2/2] jethub D2 j200 add
+Subject: [PATCH 18/20] jethub D2 j200 add
 
 ---
  arch/arm/dts/Makefile                         |   1 +
@@ -18,10 +18,10 @@ Subject: [PATCH 2/2] jethub D2 j200 add
  create mode 100644 configs/jethub_j200_defconfig
 
 diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
-index b5c588c336..33b5afe133 100644
+index 3092c9dfbfb..401e5e161d9 100644
 --- a/arch/arm/dts/Makefile
 +++ b/arch/arm/dts/Makefile
-@@ -249,6 +249,7 @@ dtb-$(CONFIG_ARCH_MESON) += \
+@@ -248,6 +248,7 @@ dtb-$(CONFIG_ARCH_MESON) += \
  	meson-g12b-radxa-zero2.dtb \
  	meson-sm1-bananapi-m2-pro.dtb \
  	meson-sm1-bananapi-m5.dtb \
@@ -31,7 +31,7 @@ index b5c588c336..33b5afe133 100644
  	meson-sm1-odroid-hc4.dtb \
 diff --git a/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts b/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts
 new file mode 100644
-index 0000000000..9ebe3effb6
+index 00000000000..9ebe3effb6b
 --- /dev/null
 +++ b/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts
 @@ -0,0 +1,614 @@
@@ -652,7 +652,7 @@ index 0000000000..9ebe3effb6
 \ No newline at end of file
 diff --git a/board/amlogic/jethub-j200/MAINTAINERS b/board/amlogic/jethub-j200/MAINTAINERS
 new file mode 100644
-index 0000000000..82f4e1c40f
+index 00000000000..82f4e1c40fd
 --- /dev/null
 +++ b/board/amlogic/jethub-j200/MAINTAINERS
 @@ -0,0 +1,8 @@
@@ -666,7 +666,7 @@ index 0000000000..82f4e1c40f
 +F:	include/configs/jethub.h
 diff --git a/board/amlogic/jethub-j200/Makefile b/board/amlogic/jethub-j200/Makefile
 new file mode 100644
-index 0000000000..cb1f5cbcb2
+index 00000000000..cb1f5cbcb26
 --- /dev/null
 +++ b/board/amlogic/jethub-j200/Makefile
 @@ -0,0 +1,6 @@
@@ -678,7 +678,7 @@ index 0000000000..cb1f5cbcb2
 +obj-y	:= jethub-j200.o
 diff --git a/board/amlogic/jethub-j200/jethub-j200.c b/board/amlogic/jethub-j200/jethub-j200.c
 new file mode 100644
-index 0000000000..d8b6d96356
+index 00000000000..d8b6d96356e
 --- /dev/null
 +++ b/board/amlogic/jethub-j200/jethub-j200.c
 @@ -0,0 +1,76 @@
@@ -760,7 +760,7 @@ index 0000000000..d8b6d96356
 +}
 diff --git a/configs/jethub_j200_defconfig b/configs/jethub_j200_defconfig
 new file mode 100644
-index 0000000000..340fbb10da
+index 00000000000..340fbb10da5
 --- /dev/null
 +++ b/configs/jethub_j200_defconfig
 @@ -0,0 +1,100 @@
@@ -865,5 +865,5 @@ index 0000000000..340fbb10da
 +CONFIG_DM_SPI=y
 +CONFIG_MESON_SPIFC=y
 -- 
-2.34.1
+2.45.1
 

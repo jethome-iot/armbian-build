@@ -1,0 +1,31 @@
+From 79dfc71455974c0fa039be0d5e0eb63d86c1eb19 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Fri, 19 Apr 2024 14:41:24 +0300
+Subject: [PATCH 16/20] add CONFIG_ANDROID_BOOT_IMAGE to magicbox/jethub_j100
+
+---
+ configs/jethome_magicbox_defconfig | 1 +
+ configs/jethub_j100_defconfig      | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/configs/jethome_magicbox_defconfig b/configs/jethome_magicbox_defconfig
+index bb03e180c4e..130cc841095 100644
+--- a/configs/jethome_magicbox_defconfig
++++ b/configs/jethome_magicbox_defconfig
+@@ -82,3 +82,4 @@ CONFIG_SECURE_STORAGE=y
+ CONFIG_AML_STORAGE=y
+ CONFIG_EFUSE=y
+ CONFIG_AML_PARTITION=y
++CONFIG_ANDROID_BOOT_IMAGE=y
+diff --git a/configs/jethub_j100_defconfig b/configs/jethub_j100_defconfig
+index f379ef005d4..fb0879b0f68 100644
+--- a/configs/jethub_j100_defconfig
++++ b/configs/jethub_j100_defconfig
+@@ -81,3 +81,4 @@ CONFIG_SECURE_STORAGE=y
+ CONFIG_AML_STORAGE=y
+ CONFIG_EFUSE=y
+ CONFIG_AML_PARTITION=y
++CONFIG_ANDROID_BOOT_IMAGE=y
+-- 
+2.45.1
+

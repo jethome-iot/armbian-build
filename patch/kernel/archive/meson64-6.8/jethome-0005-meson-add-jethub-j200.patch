@@ -1,7 +1,7 @@
-From 69168f6785de18e37d69f98bdb21a9ed7a182595 Mon Sep 17 00:00:00 2001
+From 7fbfaed5e667ed28e995f1a878ceb3dca3b2c574 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <adeep@lexina.in>
-Date: Mon, 22 Jan 2024 17:32:22 +0300
-Subject: [PATCH 5/5] meson add jethub-j200
+Date: Thu, 16 May 2024 15:14:08 +0300
+Subject: [PATCH 6/6] Add jethub j200
 
 ---
  arch/arm64/boot/dts/amlogic/Makefile          |   1 +
@@ -10,20 +10,20 @@ Subject: [PATCH 5/5] meson add jethub-j200
  create mode 100644 arch/arm64/boot/dts/amlogic/meson-sm1-jethome-jethub-j200.dts
 
 diff --git a/arch/arm64/boot/dts/amlogic/Makefile b/arch/arm64/boot/dts/amlogic/Makefile
-index 18998a758510..a71c5e5be85e 100644
+index 0f29517da5ec..d007b59497d4 100644
 --- a/arch/arm64/boot/dts/amlogic/Makefile
 +++ b/arch/arm64/boot/dts/amlogic/Makefile
-@@ -83,6 +83,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-a95xf3-air-gbit.dtb
+@@ -79,6 +79,7 @@ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-a95xf3-air.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-sm1-bananapi-m2-pro.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-sm1-bananapi-m5.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-sm1-h96-max.dtb
 +dtb-$(CONFIG_ARCH_MESON) += meson-sm1-jethome-jethub-j200.dtb
  dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l.dtb
- dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l-spidev.dtb
- dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l-spinor.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-khadas-vim3l-ts050.dtb
+ dtb-$(CONFIG_ARCH_MESON) += meson-sm1-s905d3-libretech-cc.dtb
 diff --git a/arch/arm64/boot/dts/amlogic/meson-sm1-jethome-jethub-j200.dts b/arch/arm64/boot/dts/amlogic/meson-sm1-jethome-jethub-j200.dts
 new file mode 100644
-index 000000000000..0fc108914230
+index 000000000000..9ac8250cb22f
 --- /dev/null
 +++ b/arch/arm64/boot/dts/amlogic/meson-sm1-jethome-jethub-j200.dts
 @@ -0,0 +1,613 @@
@@ -43,7 +43,7 @@ index 000000000000..0fc108914230
 +
 +
 +/ {
-+	
++
 +	compatible = "jethome,jethub-j200", "amlogic,sm1";
 +	model = "JetHome JetHub D2";
 +
@@ -256,7 +256,7 @@ index 000000000000..0fc108914230
 +		compatible = "gpio-leds";
 +
 +		led-red {
-+			color = <LED_COLOR_ID_BLUE>;
++			color = <LED_COLOR_ID_RED>;
 +			function = LED_FUNCTION_STATUS;
 +			gpios = <&gpio_ao GPIOAO_11 GPIO_ACTIVE_LOW>;
 +			linux,default-trigger = "heartbeat";
@@ -640,7 +640,6 @@ index 000000000000..0fc108914230
 +	};
 +
 +};
-\ No newline at end of file
 -- 
-2.34.1
+2.45.1
 

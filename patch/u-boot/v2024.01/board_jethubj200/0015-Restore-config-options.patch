@@ -1,0 +1,46 @@
+From a2f544e92c68fe3f7fbc03228f2157596b06b2d7 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Thu, 7 Mar 2024 12:45:08 +0300
+Subject: [PATCH 15/20] Restore config options
+
+---
+ configs/jethome_magicbox_defconfig | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/configs/jethome_magicbox_defconfig b/configs/jethome_magicbox_defconfig
+index 9dcd34bbdc2..bb03e180c4e 100644
+--- a/configs/jethome_magicbox_defconfig
++++ b/configs/jethome_magicbox_defconfig
+@@ -28,9 +28,12 @@ CONFIG_MISC_INIT_R=y
+ CONFIG_SYS_MAXARGS=32
+ # CONFIG_CMD_BDI is not set
+ # CONFIG_CMD_IMI is not set
++CONFIG_CMD_EEPROM=y
+ CONFIG_CMD_ADC=y
+ CONFIG_CMD_DFU=y
+ CONFIG_CMD_GPIO=y
++CONFIG_RANDOM_UUID=y
++CONFIG_CMD_I2C=y
+ # CONFIG_CMD_LOADS is not set
+ CONFIG_CMD_MMC=y
+ CONFIG_CMD_USB=y
+@@ -42,6 +45,8 @@ CONFIG_OF_CONTROL=y
+ CONFIG_SYS_RELOC_GD_ENV_ADDR=y
+ CONFIG_SARADC_MESON=y
+ CONFIG_DFU_RAM=y
++CONFIG_DM_I2C=y
++CONFIG_SYS_I2C_MESON=y
+ CONFIG_MMC_MESON_GX=y
+ CONFIG_MTD_UBI=y
+ CONFIG_PHY_REALTEK=y
+@@ -52,6 +57,7 @@ CONFIG_PINCTRL_MESON_AXG=y
+ CONFIG_DM_REGULATOR=y
+ CONFIG_DM_REGULATOR_FIXED=y
+ CONFIG_DM_RTC=y
++CONFIG_RTC_PCF8563=y
+ CONFIG_DEBUG_UART_ANNOUNCE=y
+ CONFIG_DEBUG_UART_SKIP_INIT=y
+ CONFIG_MESON_SERIAL=y
+-- 
+2.45.1
+

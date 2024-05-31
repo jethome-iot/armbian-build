@@ -1,0 +1,35 @@
+From c59db38f5a6c486f28430af0c328279317136139 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Wed, 6 Mar 2024 15:54:02 +0300
+Subject: [PATCH 12/20] Update magicconfig for aml
+
+---
+ configs/jethub_magicbox_defconfig | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/configs/jethub_magicbox_defconfig b/configs/jethub_magicbox_defconfig
+index ff2b6cd93ad..4ad9b31f001 100644
+--- a/configs/jethub_magicbox_defconfig
++++ b/configs/jethub_magicbox_defconfig
+@@ -43,6 +43,7 @@ CONFIG_SYS_RELOC_GD_ENV_ADDR=y
+ CONFIG_SARADC_MESON=y
+ CONFIG_DFU_RAM=y
+ CONFIG_MMC_MESON_GX=y
++CONFIG_MTD_UBI=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_ETH_DESIGNWARE_MESON8B=y
+ CONFIG_MESON_GXL_USB_PHY=y
+@@ -68,3 +69,10 @@ CONFIG_USB_GADGET_PRODUCT_NUM=0xfada
+ CONFIG_USB_GADGET_DWC2_OTG=y
+ CONFIG_USB_GADGET_DOWNLOAD=y
+ CONFIG_RANDOM_UUID=y
++
++CONFIG_AML_DRIVER=y
++CONFIG_UNIFY_KEY_MANAGE=y
++CONFIG_SECURE_STORAGE=y
++CONFIG_AML_STORAGE=y
++CONFIG_EFUSE=y
++CONFIG_AML_PARTITION=y
+-- 
+2.45.1
+

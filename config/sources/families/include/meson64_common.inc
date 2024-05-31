@@ -21,7 +21,8 @@ OVERLAY_PREFIX='meson'
 # Bring in LibreELEC's amlogic-boot-fip repo, which is the authoritative source for FIP blobs.
 # To add FIP blobs for a new board, send a PR there, they're awesome.
 function fetch_sources_tools__libreelec_amlogic_fip() {
-	fetch_from_repo "https://github.com/LibreELEC/amlogic-boot-fip" "amlogic-boot-fip" "branch:master"
+	#fetch_from_repo "https://github.com/LibreELEC/amlogic-boot-fip" "amlogic-boot-fip" "branch:master"
+	fetch_from_repo "https://github.com/adeepn/amlogic-boot-fip" "amlogic-boot-fip" "branch:add_jethub_j200"
 }
 
 # this family does not need it

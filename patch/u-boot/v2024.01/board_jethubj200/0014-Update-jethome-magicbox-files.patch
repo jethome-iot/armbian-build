@@ -1,0 +1,156 @@
+From 89bb68c9cfc8ca1ff31f2bcf0c57953478564f0a Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Wed, 6 Mar 2024 16:25:19 +0300
+Subject: [PATCH 14/20] Update jethome-magicbox files
+
+---
+ board/amlogic/jethome-magicbox/MAINTAINERS    |  8 ++
+ board/amlogic/jethome-magicbox/Makefile       |  6 ++
+ .../jethome-magicbox/jethome-magicbox.c       | 82 +++++++++++++++++++
+ ...x_defconfig => jethome_magicbox_defconfig} |  4 +-
+ 4 files changed, 98 insertions(+), 2 deletions(-)
+ create mode 100644 board/amlogic/jethome-magicbox/MAINTAINERS
+ create mode 100644 board/amlogic/jethome-magicbox/Makefile
+ create mode 100644 board/amlogic/jethome-magicbox/jethome-magicbox.c
+ rename configs/{jethub_magicbox_defconfig => jethome_magicbox_defconfig} (96%)
+
+diff --git a/board/amlogic/jethome-magicbox/MAINTAINERS b/board/amlogic/jethome-magicbox/MAINTAINERS
+new file mode 100644
+index 00000000000..43f6a5fc86b
+--- /dev/null
++++ b/board/amlogic/jethome-magicbox/MAINTAINERS
+@@ -0,0 +1,8 @@
++JetHome JetHub
++M:	Vyacheslav Bocharov <adeep@lexina.in>
++S:	Maintained
++L:	u-boot-amlogic@groups.io
++F:	board/amlogic/jethub-j100/
++F:	configs/jethub_j100_defconfig
++F:	doc/board/amlogic/jethub-j100.rst
++F:	include/configs/jethub.h
+diff --git a/board/amlogic/jethome-magicbox/Makefile b/board/amlogic/jethome-magicbox/Makefile
+new file mode 100644
+index 00000000000..e9af39ed9b7
+--- /dev/null
++++ b/board/amlogic/jethome-magicbox/Makefile
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# (C) Copyright 2024 JetHome
++# Author: Viacheslav Bocharov <adeep@lexina.in>
++
++obj-y	:= jethome-magicbox.o
+diff --git a/board/amlogic/jethome-magicbox/jethome-magicbox.c b/board/amlogic/jethome-magicbox/jethome-magicbox.c
+new file mode 100644
+index 00000000000..a8de2496c59
+--- /dev/null
++++ b/board/amlogic/jethome-magicbox/jethome-magicbox.c
+@@ -0,0 +1,82 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Copyright (C) 2024 JetHome
++ * Author: Viacheslav Bocharov <adeep@lexina.in>
++ */
++
++#include <common.h>
++#include <command.h>
++#include <dm.h>
++#include <init.h>
++#include <net.h>
++#include <asm/io.h>
++#include <asm/arch/axg.h>
++#include <asm/arch/sm.h>
++#include <asm/arch/eth.h>
++#include <asm/arch/mem.h>
++#include <u-boot/crc.h>
++
++int misc_init_r(void)
++{
++	u8 mac_addr[ARP_HLEN];
++	int ret;
++
++	char _cmdbuf[96];
++	char keyname[32];
++	char keydata[256];
++	int ver=0;
++
++	memset (mac_addr,0, sizeof(mac_addr));
++	sprintf(_cmdbuf, "store init");
++	if(!run_command(_cmdbuf, 0))
++	{
++		sprintf(_cmdbuf, "keyman init 0x1234");
++		if(!run_command(_cmdbuf, 0))
++		{
++			strcpy(keyname, "usid");
++			memset (keydata, 0, sizeof(keydata));
++			sprintf(_cmdbuf, "keyman read %s %p str", keyname, keydata);
++			ret = run_command(_cmdbuf, 0);
++			if (!ret)
++			{
++			// j100__04012201sw00016142005c
++			// 0123456789
++			  if (keydata[0] == 'j')
++			    {
++			      if (keydata[1] == '1')
++			      {
++				sprintf(_cmdbuf, "%c%c",keydata[6],keydata[7]);
++				env_set("hwrev", _cmdbuf);
++				sprintf(_cmdbuf, "%c%c",keydata[8],keydata[9]);
++				env_set("perev", _cmdbuf);
++			      }
++			    }			
++			}
++			// get serial
++			strcpy(keyname, "serial");
++			memset (keydata, 0, sizeof(keydata));
++			sprintf(_cmdbuf, "keyman read %s %p str", keyname, keydata);
++			ret = run_command(_cmdbuf, 0);
++
++			// get mac
++			strcpy(keyname, "mac");
++			memset (keydata, 0, sizeof(keydata));
++			sprintf(_cmdbuf, "keyman read %s %#p str", keyname, keydata);
++			ret = run_command(_cmdbuf, 0);
++			if (keydata[2]==':') 
++			{
++				keydata[17] = (char) 0x00;
++				sprintf(_cmdbuf,"env set ethaddr %s", keydata);
++				ret = run_command(_cmdbuf, 0);
++				mac_addr[0] = (char) 0x01;
++			} else 
++			{
++				printf("keyman read mac failed\n");
++			}
++		}
++	}
++
++	meson_generate_serial_ethaddr();
++
++	return 0;
++}
+diff --git a/configs/jethub_magicbox_defconfig b/configs/jethome_magicbox_defconfig
+similarity index 96%
+rename from configs/jethub_magicbox_defconfig
+rename to configs/jethome_magicbox_defconfig
+index 4ad9b31f001..9dcd34bbdc2 100644
+--- a/configs/jethub_magicbox_defconfig
++++ b/configs/jethome_magicbox_defconfig
+@@ -1,5 +1,5 @@
+ CONFIG_ARM=y
+-CONFIG_SYS_BOARD="jethub-j100"
++CONFIG_SYS_BOARD="jethome-magicbox"
+ CONFIG_SYS_CONFIG_NAME="jethub"
+ CONFIG_ARCH_MESON=y
+ CONFIG_TEXT_BASE=0x01000000
+@@ -14,7 +14,7 @@ CONFIG_DM_RESET=y
+ CONFIG_MESON_AXG=y
+ CONFIG_DEBUG_UART_BASE=0xff803000
+ CONFIG_DEBUG_UART_CLOCK=24000000
+-CONFIG_IDENT_STRING=" jethubj100"
++CONFIG_IDENT_STRING=" cma-magicbox"
+ CONFIG_SYS_LOAD_ADDR=0x01000000
+ CONFIG_DEBUG_UART=y
+ CONFIG_REMAKE_ELF=y
+-- 
+2.45.1
+
