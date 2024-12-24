@@ -232,7 +232,7 @@
 		led-green {
 			color = <LED_COLOR_ID_GREEN>;
 			function = LED_FUNCTION_STATUS;
-			gpios = <&gpio_ao GPIOAO_11 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio_ao GPIOAO_11 GPIO_ACTIVE_HIGH>;
 			linux,default-trigger = "heartbeat";
 			panic-indicator;
 		};
@@ -240,7 +240,7 @@
 		led-red {
 			color = <LED_COLOR_ID_RED>;
 			function = LED_FUNCTION_POWER;
-			gpios = <&gpio GPIOH_5 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio GPIOH_5 GPIO_ACTIVE_HIGH>;
 			default-state = "off";
 		};
 
