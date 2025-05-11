@@ -1,0 +1,83 @@
+From edc419ccd4cf3185ca8db47071811f5b039e7827 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 21 Nov 2024 17:58:22 +0100
+Subject: [PATCH 59/93] Revert "kbuild: deb-pkg: add
+ pkg.linux-upstream.nokernelheaders build profile"
+
+This reverts commit e2c318225ac13083cdcb4780cdf5b90edaa8644d.
+---
+ scripts/package/builddeb             | 2 +-
+ scripts/package/install-extmod-build | 6 ++++--
+ scripts/package/mkdebian             | 9 +--------
+ 3 files changed, 6 insertions(+), 11 deletions(-)
+
+diff --git a/scripts/package/builddeb b/scripts/package/builddeb
+index d1e0905c394d..74e50eff020e 100755
+--- a/scripts/package/builddeb
++++ b/scripts/package/builddeb
+@@ -162,7 +162,7 @@ install_kernel_headers () {
+ 	pdir=debian/$1
+ 	version=${1#linux-headers-}
+ 
+-	CC="${DEB_HOST_GNU_TYPE}-gcc" "${srctree}/scripts/package/install-extmod-build" "${pdir}/usr/src/linux-headers-${version}"
++	"${srctree}/scripts/package/install-extmod-build" "${pdir}/usr/src/linux-headers-${version}"
+ 
+ 	mkdir -p $pdir/lib/modules/$version/
+ 	ln -s /usr/src/linux-headers-$version $pdir/lib/modules/$version/build
+diff --git a/scripts/package/install-extmod-build b/scripts/package/install-extmod-build
+index 7ec1f061a519..d2c9cacecc0c 100755
+--- a/scripts/package/install-extmod-build
++++ b/scripts/package/install-extmod-build
+@@ -44,11 +44,13 @@ mkdir -p "${destdir}"
+ 	fi
+ } | tar -c -f - -T - | tar -xf - -C "${destdir}"
+ 
+-# When ${CC} and ${HOSTCC} differ, rebuild host programs using ${CC}.
++# When ${CC} and ${HOSTCC} differ, we are likely cross-compiling. Rebuild host
++# programs using ${CC}. This assumes CC=${CROSS_COMPILE}gcc, which is usually
++# the case for package building. It does not cross-compile when CC=clang.
+ #
+ # This caters to host programs that participate in Kbuild. objtool and
+ # resolve_btfids are out of scope.
+-if [ "${CC}" != "${HOSTCC}" ]; then
++if [ "${CC}" != "${HOSTCC}" ] && is_enabled CONFIG_CC_CAN_LINK; then
+ 	echo "Rebuilding host programs with ${CC}..."
+ 
+ 	cat <<-'EOF' >  "${destdir}/Kbuild"
+diff --git a/scripts/package/mkdebian b/scripts/package/mkdebian
+index fc3b7fa709fc..2370f83e1cf2 100755
+--- a/scripts/package/mkdebian
++++ b/scripts/package/mkdebian
+@@ -179,8 +179,6 @@ fi
+ 
+ echo $debarch > debian/arch
+ 
+-host_gnu=$(dpkg-architecture -a "${debarch}" -q DEB_HOST_GNU_TYPE | sed 's/_/-/g')
+-
+ # Generate a simple changelog template
+ cat <<EOF > debian/changelog
+ $sourcename ($packageversion) $distribution; urgency=low
+@@ -198,11 +196,7 @@ Priority: optional
+ Maintainer: $maintainer
+ Rules-Requires-Root: no
+ Build-Depends: debhelper-compat (= 12)
+-Build-Depends-Arch: bc, bison, cpio, flex,
+- gcc-${host_gnu} <!pkg.${sourcename}.nokernelheaders>,
+- kmod, libelf-dev:native,
+- libssl-dev:native, libssl-dev <!pkg.${sourcename}.nokernelheaders>,
+- rsync
++Build-Depends-Arch: bc, bison, cpio, flex, kmod, libelf-dev:native, libssl-dev:native, rsync
+ Homepage: https://www.kernel.org/
+ 
+ Package: $packagename-$version
+@@ -230,7 +224,6 @@ cat <<EOF >> debian/control
+ 
+ Package: linux-headers-$version
+ Architecture: $debarch
+-Build-Profiles: <!pkg.${sourcename}.nokernelheaders>
+ Description: Linux kernel headers for $version on $debarch
+  This package provides kernel header files for $version on $debarch
+  .
+-- 
+2.49.0
+

@@ -1,0 +1,25 @@
+From 855c07cd634cd66624a9f7b3c6ae4fb06972b9f2 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 3 Oct 2024 12:38:59 +0200
+Subject: [PATCH 49/93] arm64: dts: fix mdio pinctrl based on binding
+
+---
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index de0b19ebc728..70e8e5981804 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -323,7 +323,7 @@ mux {
+ 				};
+ 
+ 				conf {
+-					groups = "mdc_mdio0";
++					pins = "SMI_0_MDC", "SMI_0_MDIO";
+ 					drive-strength = <MTK_DRIVE_8mA>;
+ 				};
+ 			};
+-- 
+2.49.0
+

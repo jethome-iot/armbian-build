@@ -1,0 +1,25 @@
+From 1005a36942da4721b97d7dbe9f349cee14328885 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 31 Jan 2025 15:51:48 +0100
+Subject: [PATCH 71/93] defconfig: r4: add CONFIG_LED_TRIGGER_PHY for
+ ethernet-leds (not enough yet)
+
+---
+ arch/arm64/configs/mt7988a_bpi-r4_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/configs/mt7988a_bpi-r4_defconfig b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+index 3818f17e94a7..b76591c7e3d2 100644
+--- a/arch/arm64/configs/mt7988a_bpi-r4_defconfig
++++ b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+@@ -836,6 +836,7 @@ CONFIG_NET_DEVLINK=y
+ CONFIG_NET_DSA=y
+ CONFIG_NET_DSA_MT7530=y
+ CONFIG_NET_DSA_TAG_MTK=y
++CONFIG_LED_TRIGGER_PHY=y
+ CONFIG_NET_FLOW_LIMIT=y
+ CONFIG_NET_MEDIATEK_SOC=y
+ CONFIG_NET_MEDIATEK_SOC_WED=y
+-- 
+2.49.0
+

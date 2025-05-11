@@ -1,0 +1,30 @@
+From 2b134ab26d2ee71b84994df470a66b601179e44a Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 3 Oct 2024 21:44:25 +0200
+Subject: [PATCH 50/93] arm64: dts: drop i2c2-pins
+
+---
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index 70e8e5981804..86394234f405 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -349,13 +349,6 @@ mux {
+ 				};
+ 			};
+ 
+-			i2c2_pins: i2c2-pins {
+-				mux {
+-					function = "i2c";
+-					groups = "i2c2";
+-				};
+-			};
+-
+ 			i2c2_0_pins: i2c2-g0-pins {
+ 				mux {
+ 					function = "i2c";
+-- 
+2.49.0
+

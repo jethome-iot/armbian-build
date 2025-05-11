@@ -1,0 +1,51 @@
+From 2b06eb7d4cc5e5e84912493b63df8c643b5560ed Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Tue, 30 Apr 2024 23:01:17 +0100
+Subject: [PATCH 18/93] net: dsa: mt7530: fix impossible MDIO address and issue
+ warning
+
+The MDIO address of the MT7530 and MT7531 switch ICs can be configured
+using bootstrap pins. However, there are only 4 possible options for the
+switch itself: 7, 15, 23 and 31. As in MediaTek's SDK the address of the
+switch is wrongly stated in the device tree as 0 (while in reality it is
+31), warn the user about such broken device tree and make a good guess
+what was actually intended.
+
+This is imporant also to not break compatibility with older device trees
+as with commit 868ff5f4944a ("net: dsa: mt7530-mdio: read PHY address of
+switch from device tree") the address in device tree will be taken into
+account.
+
+Fixes: b8f126a8d543 ("net-next: dsa: add dsa support for Mediatek MT7530 switch")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ drivers/net/dsa/mt7530-mdio.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/net/dsa/mt7530-mdio.c b/drivers/net/dsa/mt7530-mdio.c
+index 51df42ccdbe6..ba285e8291f7 100644
+--- a/drivers/net/dsa/mt7530-mdio.c
++++ b/drivers/net/dsa/mt7530-mdio.c
+@@ -193,6 +193,19 @@ mt7530_probe(struct mdio_device *mdiodev)
+ 			return PTR_ERR(priv->io_pwr);
+ 	}
+ 
++	/* Only MDIO bus address 7, 15, 23 and 31 are valid options */
++	if (~(mdiodev->addr & 0x7) & 0x7) {
++		/* If the address in DT must be wrong, make a good guess about
++		 * the most likely intention, and issue a warning.
++		 */
++		int correct_addr = ((((mdiodev->addr - 7) & ~0x7) % 0x20) + 7) & 0x1f;
++
++		dev_warn(&mdiodev->dev, FW_WARN
++			 "impossible switch MDIO address in device tree: %d, assuming %d\n",
++			 mdiodev->addr, correct_addr);
++		mdiodev->addr = correct_addr;
++	}
++
+ 	regmap_config = devm_kzalloc(&mdiodev->dev, sizeof(*regmap_config),
+ 				     GFP_KERNEL);
+ 	if (!regmap_config)
+-- 
+2.49.0
+

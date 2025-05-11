@@ -1,0 +1,33 @@
+From d684ea2dc0f95ac10c6da8d50926d755e27b3895 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 9 Apr 2025 19:21:41 +0200
+Subject: [PATCH 82/93] defconfig: r4: fix 2 warnings
+
+---
+ arch/arm64/configs/mt7988a_bpi-r4_defconfig | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/arch/arm64/configs/mt7988a_bpi-r4_defconfig b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+index 3bce7cb2a6c0..b6688881712a 100644
+--- a/arch/arm64/configs/mt7988a_bpi-r4_defconfig
++++ b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+@@ -21,7 +21,7 @@ CONFIG_ATA_SFF=y
+ CONFIG_ATM_BR2684_IPFILTER=y
+ CONFIG_ATM_CLIP_NO_ICMP=y
+ CONFIG_BASE_FULL=y
+-CONFIG_BASE_SMALL=0
++CONFIG_BASE_SMALL=n
+ CONFIG_BCMA_POSSIBLE=y
+ CONFIG_BINARY_PRINTF=y
+ CONFIG_BINFMT_ELF=y
+@@ -1263,7 +1263,6 @@ CONFIG_CGROUP_NET_CLASSID=y
+ CONFIG_CGROUP_NET_PRIO=y
+ CONFIG_CGROUP_BPF=y
+ CONFIG_CFQ_GROUP_IOSCHED=y
+-CONFIG_CGROUP_BPF=y
+ CONFIG_POSIX_MQUEUE=y
+ CONFIG_POSIX_MQUEUE_SYSCTL=y
+ CONFIG_HAVE_ARCH_SECCOMP_FILTER=y
+-- 
+2.49.0
+

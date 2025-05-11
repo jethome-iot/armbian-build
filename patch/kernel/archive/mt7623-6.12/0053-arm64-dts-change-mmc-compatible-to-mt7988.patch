@@ -1,0 +1,27 @@
+From cea0854316c9df3d8635b4426040e2e3ddbff5e5 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 4 Oct 2024 22:52:00 +0200
+Subject: [PATCH 53/93] arm64: dts: change mmc compatible to mt7988
+
+due to different clock settings a new binding is needed
+---
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index 86394234f405..8b88a1a67291 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -838,8 +838,7 @@ afe: audio-controller@11210000 {
+ 		};
+ 
+ 		mmc0: mmc@11230000 {
+-			compatible = "mediatek,mt7986-mmc",
+-				     "mediatek,mt7981-mmc";
++			compatible = "mediatek,mt7988-mmc";
+ 			reg = <0 0x11230000 0 0x1000>,
+ 			      <0 0x11D60000 0 0x1000>;
+ 			interrupts = <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>;
+-- 
+2.49.0
+

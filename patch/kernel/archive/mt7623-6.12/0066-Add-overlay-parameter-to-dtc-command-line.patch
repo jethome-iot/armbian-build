@@ -1,0 +1,21 @@
+From 015b31f15e4724a7d38765c808c4965ed1c42a5e Mon Sep 17 00:00:00 2001
+From: Linux User <wteiken@teiken.net>
+Date: Sat, 7 Dec 2024 19:47:19 -0500
+Subject: [PATCH 66/93] Add overlay parameter to dtc command line.
+
+---
+ arch/arm64/boot/dts/mediatek/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/mediatek/Makefile b/arch/arm64/boot/dts/mediatek/Makefile
+index f28d37ccdd64..a39af44fd060 100644
+--- a/arch/arm64/boot/dts/mediatek/Makefile
++++ b/arch/arm64/boot/dts/mediatek/Makefile
+@@ -132,3 +132,4 @@ dtb-$(CONFIG_ARCH_MEDIATEK) += mt8516-pumpkin.dtb
+ # Device tree overlays support
+ DTC_FLAGS_mt7986a-bananapi-bpi-r3 := -@
+ DTC_FLAGS_mt7986a-bananapi-bpi-r3-mini := -@
++DTC_FLAGS_mt7988a-bananapi-bpi-r4 := -@
+-- 
+2.49.0
+

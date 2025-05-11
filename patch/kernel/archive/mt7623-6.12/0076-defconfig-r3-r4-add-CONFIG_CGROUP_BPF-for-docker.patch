@@ -1,0 +1,37 @@
+From 4c5b4af9210ae38b2232a8d569f6277fbafcc1c6 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Sat, 29 Jun 2024 11:03:15 +0200
+Subject: [PATCH 76/93] defconfig: r3/r4: add CONFIG_CGROUP_BPF for docker
+
+---
+ arch/arm64/configs/mt7986a_bpi-r3_defconfig | 1 +
+ arch/arm64/configs/mt7988a_bpi-r4_defconfig | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/arch/arm64/configs/mt7986a_bpi-r3_defconfig b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+index 4e024513e4a8..2c48c4b147eb 100644
+--- a/arch/arm64/configs/mt7986a_bpi-r3_defconfig
++++ b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+@@ -1246,6 +1246,7 @@ CONFIG_CGROUP_PIDS=y
+ CONFIG_CGROUP_PERF=y
+ CONFIG_CGROUP_NET_CLASSID=y
+ CONFIG_CGROUP_NET_PRIO=y
++CONFIG_CGROUP_BPF=y
+ CONFIG_CFQ_GROUP_IOSCHED=y
+ CONFIG_POSIX_MQUEUE=y
+ CONFIG_POSIX_MQUEUE_SYSCTL=y
+diff --git a/arch/arm64/configs/mt7988a_bpi-r4_defconfig b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+index b76591c7e3d2..120b62f9afcb 100644
+--- a/arch/arm64/configs/mt7988a_bpi-r4_defconfig
++++ b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+@@ -1259,6 +1259,7 @@ CONFIG_CGROUP_PIDS=y
+ CONFIG_CGROUP_PERF=y
+ CONFIG_CGROUP_NET_CLASSID=y
+ CONFIG_CGROUP_NET_PRIO=y
++CONFIG_CGROUP_BPF=y
+ CONFIG_CFQ_GROUP_IOSCHED=y
+ CONFIG_CGROUP_BPF=y
+ CONFIG_POSIX_MQUEUE=y
+-- 
+2.49.0
+

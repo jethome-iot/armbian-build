@@ -1,0 +1,35 @@
+From 04bc03884148ff4e41843ccb5cbaa1fcf06c9cf2 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Tue, 3 Dec 2024 13:10:11 +0100
+Subject: [PATCH 63/93] change regulator-allowed-modes of pmic as 2 items
+
+dtbs-check is clear..functionality have to be checked
+---
+ arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
+index 10e24f802b10..f733de456471 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
++++ b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
+@@ -196,7 +196,7 @@ rt5190_buck1: buck1 {
+ 				regulator-min-microvolt = <5090000>;
+ 				regulator-max-microvolt = <5090000>;
+ 				regulator-allowed-modes =
+-				<RT5190A_OPMODE_AUTO RT5190A_OPMODE_FPWM>;
++				<RT5190A_OPMODE_AUTO>, <RT5190A_OPMODE_FPWM>;
+ 				regulator-boot-on;
+ 				regulator-always-on;
+ 			};
+@@ -218,7 +218,7 @@ buck4 {
+ 				regulator-min-microvolt = <850000>;
+ 				regulator-max-microvolt = <850000>;
+ 				regulator-allowed-modes =
+-				<RT5190A_OPMODE_AUTO RT5190A_OPMODE_FPWM>;
++				<RT5190A_OPMODE_AUTO>, <RT5190A_OPMODE_FPWM>;
+ 				regulator-boot-on;
+ 				regulator-always-on;
+ 			};
+-- 
+2.49.0
+

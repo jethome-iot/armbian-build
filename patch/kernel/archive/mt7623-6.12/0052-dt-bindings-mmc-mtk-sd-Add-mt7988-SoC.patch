@@ -1,0 +1,55 @@
+From e92e2a7504ca6eeb7bafb2edaab70da2df52c2c7 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 4 Oct 2024 22:51:24 +0200
+Subject: [PATCH 52/93] dt-bindings: mmc: mtk-sd: Add mt7988 SoC
+
+Signed-off-by: Frank Wunderlich <frank-w@public-files.de>
+---
+ .../devicetree/bindings/mmc/mtk-sd.yaml       | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/mmc/mtk-sd.yaml b/Documentation/devicetree/bindings/mmc/mtk-sd.yaml
+index c532ec92d2d9..db7d1c570aea 100644
+--- a/Documentation/devicetree/bindings/mmc/mtk-sd.yaml
++++ b/Documentation/devicetree/bindings/mmc/mtk-sd.yaml
+@@ -21,6 +21,7 @@ properties:
+           - mediatek,mt7620-mmc
+           - mediatek,mt7622-mmc
+           - mediatek,mt7986-mmc
++          - mediatek,mt7988-mmc
+           - mediatek,mt8135-mmc
+           - mediatek,mt8173-mmc
+           - mediatek,mt8183-mmc
+@@ -263,6 +264,29 @@ allOf:
+             - const: bus_clk
+             - const: sys_cg
+ 
++  - if:
++      properties:
++        compatible:
++          contains:
++            enum:
++              - mediatek,mt7988-mmc
++    then:
++      properties:
++        clocks:
++          minItems: 3
++          items:
++            - description: source clock
++            - description: HCLK which used for host
++            - description: Advanced eXtensible Interface
++            - description: Advanced High-performance Bus clock
++        clock-names:
++          minItems: 3
++          items:
++            - const: source
++            - const: hclk
++            - const: axi_cg
++            - const: ahb_cg
++
+   - if:
+       properties:
+         compatible:
+-- 
+2.49.0
+

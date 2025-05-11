@@ -1,0 +1,32 @@
+From 144ee751af78431caa2da9c635d5a776616e2861 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Mon, 14 Apr 2025 16:25:04 +0200
+Subject: [PATCH 88/93] net: phy: mediatek: rename driver like on 6.15 (to have
+ same module to load)
+
+---
+ drivers/net/phy/Makefile                          | 2 +-
+ drivers/net/phy/{mediatek-2p5ge.c => mtk-2p5ge.c} | 0
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+ rename drivers/net/phy/{mediatek-2p5ge.c => mtk-2p5ge.c} (100%)
+
+diff --git a/drivers/net/phy/Makefile b/drivers/net/phy/Makefile
+index 4decc05cc567..f405ea6d4040 100644
+--- a/drivers/net/phy/Makefile
++++ b/drivers/net/phy/Makefile
+@@ -74,7 +74,7 @@ obj-$(CONFIG_MARVELL_PHY)	+= marvell.o
+ obj-$(CONFIG_MARVELL_88Q2XXX_PHY)	+= marvell-88q2xxx.o
+ obj-$(CONFIG_MARVELL_88X2222_PHY)	+= marvell-88x2222.o
+ obj-$(CONFIG_MAXLINEAR_GPHY)	+= mxl-gpy.o
+-obj-$(CONFIG_MEDIATEK_2P5G_PHY)	+= mediatek-2p5ge.o
++obj-$(CONFIG_MEDIATEK_2P5G_PHY)	+= mtk-2p5ge.o
+ obj-$(CONFIG_MEDIATEK_GE_PHY)	+= mediatek-ge.o
+ obj-$(CONFIG_MEDIATEK_GE_SOC_PHY)	+= mediatek-ge-soc.o
+ obj-$(CONFIG_MESON_GXL_PHY)	+= meson-gxl.o
+diff --git a/drivers/net/phy/mediatek-2p5ge.c b/drivers/net/phy/mtk-2p5ge.c
+similarity index 100%
+rename from drivers/net/phy/mediatek-2p5ge.c
+rename to drivers/net/phy/mtk-2p5ge.c
+-- 
+2.49.0
+

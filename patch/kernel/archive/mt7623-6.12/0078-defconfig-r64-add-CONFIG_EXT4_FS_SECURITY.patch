@@ -1,0 +1,24 @@
+From 4434cd74e616550f7d213eaf8961a8c5dfc4131e Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 28 Mar 2025 18:36:13 +0100
+Subject: [PATCH 78/93] defconfig: r64: add CONFIG_EXT4_FS_SECURITY
+
+---
+ arch/arm64/configs/mt7622_bpi-r64_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/configs/mt7622_bpi-r64_defconfig b/arch/arm64/configs/mt7622_bpi-r64_defconfig
+index 72359b09879a..2df40ca63875 100644
+--- a/arch/arm64/configs/mt7622_bpi-r64_defconfig
++++ b/arch/arm64/configs/mt7622_bpi-r64_defconfig
+@@ -290,6 +290,7 @@ CONFIG_PWM_MEDIATEK=y
+ CONFIG_PHY_MTK_TPHY=y
+ CONFIG_NVMEM_MTK_EFUSE=y
+ CONFIG_EXT4_FS=y
++CONFIG_EXT4_FS_SECURITY=y
+ CONFIG_VFAT_FS=y
+ CONFIG_TMPFS=y
+ CONFIG_PRINTK_TIME=y
+-- 
+2.49.0
+

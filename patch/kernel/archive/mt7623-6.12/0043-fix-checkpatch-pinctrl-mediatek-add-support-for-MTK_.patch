@@ -1,0 +1,52 @@
+From 9f9ac18767dd0af5ee93dbb038c20932e12fc9d2 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 2 Oct 2024 13:36:47 +0200
+Subject: [PATCH 43/93] fix checkpatch
+ pinctrl-mediatek-add-support-for-MTK_PULL_PD_TYPE
+
+WARNING: please, no spaces at the start of a line
+\#28: FILE: drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c:608:
++    int err, pd;$
+
+WARNING: please, no spaces at the start of a line
+\#59: FILE: drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c:789:
++    }$
+
+total: 0 errors, 2 warnings, 90 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+0001-pinctrl-mediatek-add-support-for-MTK_PULL_PD_TYPE.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+---
+ drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c b/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c
+index cf218dc69284..eff2aecd31dd 100644
+--- a/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c
++++ b/drivers/pinctrl/mediatek/pinctrl-mtk-common-v2.c
+@@ -605,7 +605,7 @@ static int mtk_pinconf_bias_set_pd(struct mtk_pinctrl *hw,
+ 				const struct mtk_pin_desc *desc,
+ 				u32 pullup, u32 arg)
+ {
+-    int err, pd;
++	int err, pd;
+ 
+ 	if (arg == MTK_DISABLE)
+ 		pd = 0;
+@@ -786,7 +786,7 @@ int mtk_pinconf_bias_set_combo(struct mtk_pinctrl *hw,
+ 		err = mtk_pinconf_bias_set_pd(hw, desc, pullup, arg);
+ 		if (!err)
+ 			return err;
+-    }
++	}
+ 
+ 	if (try_all_type & MTK_PULL_PU_PD_TYPE) {
+ 		err = mtk_pinconf_bias_set_pu_pd(hw, desc, pullup, arg);
+-- 
+2.49.0
+

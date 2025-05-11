@@ -1,0 +1,28 @@
+From f8ed64a3c40b5bef11183a4a571c1500905850a5 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 5 Mar 2025 22:57:53 +0100
+Subject: [PATCH 73/93] its: r3: add sata overlay
+
+---
+ bpi-r3.its | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/bpi-r3.its b/bpi-r3.its
+index c92291da749a..289da99779c5 100644
+--- a/bpi-r3.its
++++ b/bpi-r3.its
+@@ -60,6 +60,11 @@
+ 			type = "flat_dt";
+ 			arch = "arm64";
+ 		};
++		fdt-ov-sata{
++			data = /incbin/("./arch/arm64/boot/dts/mediatek/mt7986a-bananapi-bpi-r3-sata.dtbo");
++			type = "flat_dt";
++			arch = "arm64";
++		};
+ /*		ramdisk-1 {
+ 			description = "ramdisk";
+ 			data = /incbin/("./rootfs_arm64.cpio.gz");
+-- 
+2.49.0
+

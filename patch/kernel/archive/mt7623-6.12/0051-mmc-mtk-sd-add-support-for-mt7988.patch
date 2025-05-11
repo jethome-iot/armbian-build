@@ -1,0 +1,27 @@
+From ad684a5454d29179620a3e2a7cb39e11c42daa80 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 4 Oct 2024 22:49:56 +0200
+Subject: [PATCH 51/93] mmc: mtk-sd: add support for mt7988
+
+use mt7986 platform data but own compatible because different clocks
+
+Signed-off-by: Frank Wunderlich <frank-w@public-files.de>
+---
+ drivers/mmc/host/mtk-sd.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/mmc/host/mtk-sd.c b/drivers/mmc/host/mtk-sd.c
+index d5d868cb4edc..6fa09807e75f 100644
+--- a/drivers/mmc/host/mtk-sd.c
++++ b/drivers/mmc/host/mtk-sd.c
+@@ -631,6 +631,7 @@ static const struct of_device_id msdc_of_ids[] = {
+ 	{ .compatible = "mediatek,mt7620-mmc", .data = &mt7620_compat},
+ 	{ .compatible = "mediatek,mt7622-mmc", .data = &mt7622_compat},
+ 	{ .compatible = "mediatek,mt7986-mmc", .data = &mt7986_compat},
++	{ .compatible = "mediatek,mt7988-mmc", .data = &mt7986_compat},
+ 	{ .compatible = "mediatek,mt8135-mmc", .data = &mt8135_compat},
+ 	{ .compatible = "mediatek,mt8173-mmc", .data = &mt8173_compat},
+ 	{ .compatible = "mediatek,mt8183-mmc", .data = &mt8183_compat},
+-- 
+2.49.0
+

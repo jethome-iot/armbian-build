@@ -1,0 +1,30 @@
+From a5e0640dbcfcfe0c82889ff25d8f1fb67b0f7257 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 2 Oct 2024 14:01:44 +0200
+Subject: [PATCH 45/93] arm64: dts: mt7988: drop base suffix from pinctrl
+ regnames
+
+---
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index 3653ccb746f3..6b3b4a6c4893 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -305,9 +305,9 @@ pio: pinctrl@1001f000 {
+ 			<0 0x11e00000 0 0x1000>,
+ 			<0 0x11f00000 0 0x1000>,
+ 			<0 0x1000b000 0 0x1000>;
+-			reg-names = "gpio_base", "iocfg_tr_base",
+-				    "iocfg_br_base", "iocfg_rb_base",
+-				    "iocfg_lb_base", "iocfg_tl_base", "eint";
++			reg-names = "gpio", "iocfg_tr",
++				    "iocfg_br", "iocfg_rb",
++				    "iocfg_lb", "iocfg_tl", "eint";
+ 			gpio-controller;
+ 			#gpio-cells = <2>;
+ 			gpio-ranges = <&pio 0 0 84>;
+-- 
+2.49.0
+

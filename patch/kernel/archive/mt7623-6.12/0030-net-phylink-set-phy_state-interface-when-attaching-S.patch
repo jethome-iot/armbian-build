@@ -1,0 +1,46 @@
+From 9963ae3e1a3098c5719519c67fa1b2dc1a27b1e7 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sat, 25 Nov 2023 04:41:53 +0000
+Subject: [PATCH 30/93] net: phylink: set phy_state interface when attaching
+ SFP
+
+Assume 'usxgmii' being set as initial interface mode in DTS. Now plug
+a 2.5GBase-T SFP module with exposed PHY. Currently this results in
+the rather bizare situation:
+RTL8221B-VB-CG 2.5Gbps PHY (C45) i2c:sfp1-wan:11: rtl822x_c45_get_features: supported=00,00000000,00008000,000080ef
+mtk_soc_eth 15100000.ethernet eth2: requesting link mode phy/2500base-x with support 00,00000000,00008000,0000e0ef
+mtk_soc_eth 15100000.ethernet eth2: switched to phy/2500base-x link mode
+mtk_soc_eth 15100000.ethernet eth2: major config usxgmii
+mtk_soc_eth 15100000.ethernet eth2: phylink_mac_config: mode=phy/usxgmii/none adv=00,00000000,00000000,00000000 pause=00
+mtk_soc_eth 15100000.ethernet eth2: PHY [i2c:sfp1-wan:11] driver [RTL8221B-VB-CG 2.5Gbps PHY (C45)] (irq=POLL)
+mtk_soc_eth 15100000.ethernet eth2: phy: 2500base-x setting supported 00,00000000,00008000,0000e0ef advertising 00,00000000,00008000,0000e0ef
+... (and no subsequent call to phylink_major_config actually
+configuring 2500base-x mode)
+
+This is because phylink_mac_initial_config() considers
+pl->phy_state.interface if in MLO_AN_PHY mode while
+phylink_sfp_set_config() only sets pl->link_config.interface.
+
+Also set pl->phy_state.interface in phylink_sfp_set_config().
+
+Fixes: 31eb8907aa5b9 ("net: phylink: allow attaching phy for SFP modules on 802.3z mode")
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ drivers/net/phy/phylink.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/phy/phylink.c b/drivers/net/phy/phylink.c
+index 054afda9c3fc..faabf3b07542 100644
+--- a/drivers/net/phy/phylink.c
++++ b/drivers/net/phy/phylink.c
+@@ -3246,6 +3246,7 @@ static void phylink_sfp_set_config(struct phylink *pl, u8 mode,
+ 	    pl->link_config.interface != state->interface) {
+ 		pl->cur_link_an_mode = mode;
+ 		pl->link_config.interface = state->interface;
++		pl->phy_state.interface = state->interface;
+ 
+ 		changed = true;
+ 
+-- 
+2.49.0
+

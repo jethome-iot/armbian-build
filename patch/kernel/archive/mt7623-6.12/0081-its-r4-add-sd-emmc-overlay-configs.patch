@@ -1,0 +1,31 @@
+From 5c89ebfbc5addf2c0137b03622f4f59120e80b6a Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 9 Apr 2025 20:01:28 +0200
+Subject: [PATCH 81/93] its: r4: add sd/emmc overlay configs
+
+to be compatible with newest uboot changes
+---
+ bpi-r4.its | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/bpi-r4.its b/bpi-r4.its
+index fb2c0efb57ba..de0ed5023654 100644
+--- a/bpi-r4.its
++++ b/bpi-r4.its
+@@ -106,5 +106,13 @@
+ 				algo = "sha1";
+ 			};
+ 		};
++		ov-sd {
++			description = "SD FDT overlay blob";
++			fdt = "fdt-ov-sd";
++		};
++		ov-emmc {
++			description = "EMMC FDT overlay blob";
++			fdt = "fdt-ov-emmc";
++		};
+ 	};
+ };
+-- 
+2.49.0
+

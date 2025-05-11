@@ -1,0 +1,48 @@
+From 75fe683a2e7eb20a9235e85553ca777bcbd62867 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 1 Nov 2024 16:29:17 +0100
+Subject: [PATCH 56/93] arm64: dts: mt7988: some spi fixes
+
+---
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index 8b88a1a67291..09febc065626 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -721,7 +721,7 @@ spi0: spi@11007000 {
+ 				 <&infracfg CLK_INFRA_104M_SPI0>,
+ 				 <&infracfg CLK_INFRA_66M_SPI0_HCK>;
+ 			clock-names = "parent-clk", "sel-clk", "spi-clk",
+-				      "spi-hclk";
++				      "hclk";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+ 			status = "disabled";
+@@ -732,11 +732,11 @@ spi1: spi@11008000 {
+ 			reg = <0 0x11008000 0 0x100>;
+ 			interrupts = <GIC_SPI 141 IRQ_TYPE_LEVEL_HIGH>;
+ 			clocks = <&topckgen CLK_TOP_MPLL_D2>,
+-				 <&topckgen CLK_TOP_SPI_SEL>,
++				 <&topckgen CLK_TOP_SPIM_MST_SEL>,
+ 				 <&infracfg CLK_INFRA_104M_SPI1>,
+ 				 <&infracfg CLK_INFRA_66M_SPI1_HCK>;
+ 			clock-names = "parent-clk", "sel-clk", "spi-clk",
+-				      "spi-hclk";
++				      "hclk";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+ 			pinctrl-names = "default";
+@@ -753,7 +753,7 @@ spi2: spi@11009000 {
+ 				 <&infracfg CLK_INFRA_104M_SPI2_BCK>,
+ 				 <&infracfg CLK_INFRA_66M_SPI2_HCK>;
+ 			clock-names = "parent-clk", "sel-clk", "spi-clk",
+-				      "spi-hclk";
++				      "hclk";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+ 			status = "disabled";
+-- 
+2.49.0
+

@@ -1,0 +1,88 @@
+From 7a2fbf03085f29621879e9b97d8bb30027def4f6 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Sun, 1 Sep 2024 13:12:38 +0200
+Subject: [PATCH 12/93] utils: docker: add files for using docker as
+ building-environment
+
+---
+ utils/docker/Dockerfile         | 33 +++++++++++++++++++++++++++++++++
+ utils/docker/build_container.sh |  5 +++++
+ utils/docker/run.sh             | 14 ++++++++++++++
+ 3 files changed, 52 insertions(+)
+ create mode 100644 utils/docker/Dockerfile
+ create mode 100755 utils/docker/build_container.sh
+ create mode 100755 utils/docker/run.sh
+
+diff --git a/utils/docker/Dockerfile b/utils/docker/Dockerfile
+new file mode 100644
+index 000000000000..62b964e4ac4f
+--- /dev/null
++++ b/utils/docker/Dockerfile
+@@ -0,0 +1,33 @@
++FROM ubuntu:noble
++
++RUN apt-get update               \
++ && apt-get -y -q upgrade        \
++ && apt-get -y -q install        \
++    bc                           \
++    bison                        \
++    build-essential              \
++    ccache                       \
++    flex                         \
++    gcc-arm-linux-gnueabihf      \
++    gcc-aarch64-linux-gnu        \
++    git                          \
++    libc6-armhf-cross            \
++    libncurses-dev               \
++    libssl-dev                   \
++    make                         \
++    u-boot-tools                 \
++    wget                         \
++    xz-utils                     \
++    libncurses-dev               \
++    nano                         \
++    sudo                         \
++    kmod                         \
++    debhelper rsync cpio         \
++ && apt-get clean
++
++RUN usermod -aG sudo ubuntu && \
++    echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
++
++RUN mkdir -p /srv/code && chmod a+rwx -R /srv
++
++WORKDIR /srv/code
+diff --git a/utils/docker/build_container.sh b/utils/docker/build_container.sh
+new file mode 100755
+index 000000000000..e47cda1f287a
+--- /dev/null
++++ b/utils/docker/build_container.sh
+@@ -0,0 +1,5 @@
++#!/bin/sh
++
++DIR=$(dirname "$(readlink -f "$0")")
++
++docker build "$DIR" --tag bpi-cross-compile:1
+diff --git a/utils/docker/run.sh b/utils/docker/run.sh
+new file mode 100755
+index 000000000000..d7f819eeaf41
+--- /dev/null
++++ b/utils/docker/run.sh
+@@ -0,0 +1,14 @@
++#!/bin/sh
++
++DIR=$(dirname "$(readlink -f "$0")")
++REPO_DIR="$DIR/../.."
++
++export UID=$(id -u)
++export GID=$(id -g)
++
++mkdir -p "$REPO_DIR/SD"
++docker run --privileged -it \
++	--user $UID:$GID \
++	-v "$REPO_DIR/SD":/srv/SD \
++	-v "$REPO_DIR":/srv/code \
++	bpi-cross-compile:1 /bin/bash
+-- 
+2.49.0
+

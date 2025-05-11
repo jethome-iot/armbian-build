@@ -1,0 +1,22 @@
+From 95e00ceb416dd37166e879095e83b827529c0a4d Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Mon, 14 Apr 2025 10:55:42 +0200
+Subject: [PATCH 84/93] defconfig: r4: add 2g5 phy as module (was y without set
+ in config)
+
+---
+ arch/arm64/configs/mt7988a_bpi-r4_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/configs/mt7988a_bpi-r4_defconfig b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+index b6688881712a..b0a580eb5b80 100644
+--- a/arch/arm64/configs/mt7988a_bpi-r4_defconfig
++++ b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+@@ -1298,3 +1298,4 @@ CONFIG_MTK_T7XX=m
+ 
+ CONFIG_MARVELL_PHY=m
+ CONFIG_MARVELL_10G_PHY=m
++CONFIG_MEDIATEK_2P5G_PHY=m
+-- 
+2.49.0
+

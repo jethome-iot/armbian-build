@@ -1,0 +1,24 @@
+From 4643e28ce6b9f0d885aab1f5fa4718689b57f2f5 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Fri, 28 Mar 2025 17:46:30 +0100
+Subject: [PATCH 75/93] defconfig: r3: add CONFIG_EXT4_FS_SECURITY
+
+---
+ arch/arm64/configs/mt7986a_bpi-r3_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/configs/mt7986a_bpi-r3_defconfig b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+index c789ae73e98f..4e024513e4a8 100644
+--- a/arch/arm64/configs/mt7986a_bpi-r3_defconfig
++++ b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+@@ -711,6 +711,7 @@ CONFIG_DYNAMIC_DEBUG=y
+ CONFIG_EDAC_SUPPORT=y
+ CONFIG_EINT_MTK=y
+ CONFIG_EXT4_FS=y
++CONFIG_EXT4_FS_SECURITY=y
+ CONFIG_F2FS_FS=y
+ CONFIG_FIT_PARTITION=y
+ CONFIG_FIXED_PHY=y
+-- 
+2.49.0
+

@@ -1,0 +1,193 @@
+From 3e40aead815686b0cfa3db4d1597c13553b3ce85 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 5 Dec 2024 08:27:19 +0100
+Subject: [PATCH 64/93] arm64: dts: change dtso to not using fragment syntax
+
+---
+ .../mt7988a-bananapi-bpi-r4-emmc.dtso         | 76 +++++++++----------
+ .../mediatek/mt7988a-bananapi-bpi-r4-sd.dtso  | 68 ++++++++---------
+ 2 files changed, 66 insertions(+), 78 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-emmc.dtso b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-emmc.dtso
+index 4945185d699e..621a29c931ae 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-emmc.dtso
++++ b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-emmc.dtso
+@@ -9,54 +9,48 @@
+ 
+ / {
+ 	compatible = "bananapi,bpi-r4", "mediatek,mt7988a";
++};
+ 
+-	fragment@0 {
+-		target-path = "/soc/mmc@11230000";
+-		__overlay__ {
+-			pinctrl-names = "default", "state_uhs";
+-			pinctrl-0 = <&mmc0_pins_emmc_51>;
+-			pinctrl-1 = <&mmc0_pins_emmc_51>;
+-			bus-width = <8>;
+-			max-frequency = <200000000>;
+-			cap-mmc-highspeed;
+-			mmc-hs200-1_8v;
+-			mmc-hs400-1_8v;
+-			hs400-ds-delay = <0x12814>;
+-			vqmmc-supply = <&reg_1p8v>;
+-			vmmc-supply = <&reg_3p3v>;
+-			non-removable;
+-			no-sd;
+-			no-sdio;
+-			status = "okay";
+-			#address-cells = <1>;
+-			#size-cells = <0>;
++&{/soc/mmc@11230000} {
++	pinctrl-names = "default", "state_uhs";
++	pinctrl-0 = <&mmc0_pins_emmc_51>;
++	pinctrl-1 = <&mmc0_pins_emmc_51>;
++	bus-width = <8>;
++	max-frequency = <200000000>;
++	cap-mmc-highspeed;
++	mmc-hs200-1_8v;
++	mmc-hs400-1_8v;
++	hs400-ds-delay = <0x12814>;
++	vqmmc-supply = <&reg_1p8v>;
++	vmmc-supply = <&reg_3p3v>;
++	non-removable;
++	no-sd;
++	no-sdio;
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
+ 
+-			card@0 {
+-				compatible = "mmc-card";
+-				reg = <0>;
++	card@0 {
++		compatible = "mmc-card";
++		reg = <0>;
+ 
+-				block {
+-					compatible = "block-device";
+-					partitions {
+-						block-partition-env {
+-							partname = "ubootenv";
+-							nvmem-layout {
+-								compatible = "u-boot,env-layout";
+-							};
+-						};
+-						emmc_rootfs: block-partition-production {
+-							partname = "production";
+-						};
++		block {
++			compatible = "block-device";
++			partitions {
++				block-partition-env {
++					partname = "ubootenv";
++					nvmem-layout {
++						compatible = "u-boot,env-layout";
+ 					};
+ 				};
++				emmc_rootfs: block-partition-production {
++					partname = "production";
++				};
+ 			};
+ 		};
+ 	};
++};
+ 
+-	fragment@2 {
+-		target-path = "/chosen";
+-		__overlay__ {
+-			rootdisk-emmc = <&emmc_rootfs>;
+-		};
+-	};
++&{/chosen} {
++	rootdisk-emmc = <&emmc_rootfs>;
+ };
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-sd.dtso b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-sd.dtso
+index 1f5e1491a471..73fd10691495 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-sd.dtso
++++ b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-sd.dtso
+@@ -11,50 +11,44 @@
+ 
+ / {
+ 	compatible = "bananapi,bpi-r4", "mediatek,mt7988a";
++};
+ 
+-	fragment@1 {
+-		target-path = "/soc/mmc@11230000";
+-		__overlay__ {
+-			pinctrl-names = "default", "state_uhs";
+-			pinctrl-0 = <&mmc0_pins_sdcard>;
+-			pinctrl-1 = <&mmc0_pins_sdcard>;
+-			cd-gpios = <&pio 12 GPIO_ACTIVE_LOW>;
+-			bus-width = <4>;
+-			max-frequency = <52000000>;
+-			cap-sd-highspeed;
+-			vmmc-supply = <&reg_3p3v>;
+-			vqmmc-supply = <&reg_3p3v>;
+-			no-mmc;
+-			status = "okay";
+-			#address-cells = <1>;
+-			#size-cells = <0>;
++&{/soc/mmc@11230000} {
++	pinctrl-names = "default", "state_uhs";
++	pinctrl-0 = <&mmc0_pins_sdcard>;
++	pinctrl-1 = <&mmc0_pins_sdcard>;
++	cd-gpios = <&pio 12 GPIO_ACTIVE_LOW>;
++	bus-width = <4>;
++	max-frequency = <52000000>;
++	cap-sd-highspeed;
++	vmmc-supply = <&reg_3p3v>;
++	vqmmc-supply = <&reg_3p3v>;
++	no-mmc;
++	#address-cells = <1>;
++	#size-cells = <0>;
++	status = "okay";
+ 
+-			card@0 {
+-				compatible = "mmc-card";
+-				reg = <0>;
++	card@0 {
++		compatible = "mmc-card";
++		reg = <0>;
+ 
+-				block {
+-					compatible = "block-device";
+-					partitions {
+-						block-partition-env {
+-							partname = "ubootenv";
+-							nvmem-layout {
+-								compatible = "u-boot,env-layout";
+-							};
+-						};
+-						sd_rootfs: block-partition-production {
+-							partname = "production";
+-						};
++		block {
++			compatible = "block-device";
++			partitions {
++				block-partition-env {
++					partname = "ubootenv";
++					nvmem-layout {
++						compatible = "u-boot,env-layout";
+ 					};
+ 				};
++				sd_rootfs: block-partition-production {
++					partname = "production";
++				};
+ 			};
+ 		};
+ 	};
++};
+ 
+-	fragment@2 {
+-		target-path = "/chosen";
+-		__overlay__ {
+-			rootdisk-sd = <&sd_rootfs>;
+-		};
+-	};
++&{/chosen} {
++	rootdisk-sd = <&sd_rootfs>;
+ };
+-- 
+2.49.0
+

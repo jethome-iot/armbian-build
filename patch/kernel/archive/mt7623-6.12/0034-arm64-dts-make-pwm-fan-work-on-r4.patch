@@ -1,0 +1,54 @@
+From 2595cf663d49ec33c5d43f3daf57b206c5423c3c Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Sat, 20 Apr 2024 12:00:26 +0200
+Subject: [PATCH 34/93] arm64: dts: make pwm-fan work on r4
+
+add new fan speed setting to fix bind error because of zero-index
+cooling-points.
+
+[    5.080681] thermal_sys: Failed to bind 'cpu-thermal' with 'pwm-fan': -22
+
+Signed-off-by: Frank Wunderlich <frank-w@public-files.de>
+---
+ arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts | 9 +++++++++
+ arch/arm64/boot/dts/mediatek/mt7988a.dtsi                | 4 ++--
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
+index de138930bf10..10e24f802b10 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
++++ b/arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4.dts
+@@ -318,6 +318,15 @@ &pcie3 {
+ 	status = "okay";
+ };
+ 
++&pwm {
++	status = "okay";
++};
++
++&fan {
++	pwms = <&pwm 0 50000>;
++	status = "okay";
++};
++
+ &ssusb1 {
+ 	status = "okay";
+ };
+diff --git a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+index 4a5110586b6d..3653ccb746f3 100644
+--- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
++++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
+@@ -121,8 +121,8 @@ opp03 {
+ 
+ 	fan: pwm-fan {
+ 		compatible = "pwm-fan";
+-		/* cooling level (0, 1, 2) : (0% duty, 50% duty, 100% duty) */
+-		cooling-levels = <0 128 255>;
++		/* cooling level (0, 1, 2, 3) : (0% duty, 30% duty, 50% duty, 100% duty) */
++		cooling-levels = <0 80 128 255>;
+ 		#cooling-cells = <2>;
+ 		#thermal-sensor-cells = <1>;
+ 		status = "disabled";
+-- 
+2.49.0
+

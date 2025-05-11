@@ -1,0 +1,77 @@
+From 5263d3ca615753689d328ad4a6178628007a315b Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Sat, 1 Jun 2024 12:36:27 +0200
+Subject: [PATCH 17/93] net: ethernet: mediatek: update dma sizes after RSS
+ will be merged
+
+This reverts commit 12b30fe6685fb5d07fb4777c2a59dabe60557104.
+
+    Change the TX/RX DMA Size from 512 to 2048 for all platforms.
+
+    and change the FQ DMA Size to 4096 for MT7988, while
+    keeping the others at 2048.
+---
+ drivers/net/ethernet/mediatek/mtk_eth_soc.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+index 881a3af962df..03a5d881e775 100644
+--- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+@@ -5281,7 +5281,7 @@ static const struct mtk_soc_data mt7981_data = {
+ 		.desc_size = sizeof(struct mtk_tx_dma_v2),
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
+ 		.dma_len_offset = 8,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(4K),
+ 		.fq_dma_size = MTK_DMA_SIZE(2K),
+ 	},
+ 	.rx = {
+@@ -5290,7 +5290,7 @@ static const struct mtk_soc_data mt7981_data = {
+ 		.dma_l4_valid = RX_DMA_L4_VALID_V2,
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN,
+ 		.dma_len_offset = 16,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(1K),
+ 	},
+ };
+ 
+@@ -5311,7 +5311,7 @@ static const struct mtk_soc_data mt7986_data = {
+ 		.desc_size = sizeof(struct mtk_tx_dma_v2),
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
+ 		.dma_len_offset = 8,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(4K),
+ 		.fq_dma_size = MTK_DMA_SIZE(2K),
+ 	},
+ 	.rx = {
+@@ -5320,7 +5320,7 @@ static const struct mtk_soc_data mt7986_data = {
+ 		.dma_l4_valid = RX_DMA_L4_VALID_V2,
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN,
+ 		.dma_len_offset = 16,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(1K),
+ 	},
+ };
+ 
+@@ -5341,7 +5341,7 @@ static const struct mtk_soc_data mt7988_data = {
+ 		.desc_size = sizeof(struct mtk_tx_dma_v2),
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
+ 		.dma_len_offset = 8,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(4K),
+ 		.fq_dma_size = MTK_DMA_SIZE(4K),
+ 	},
+ 	.rx = {
+@@ -5350,7 +5350,7 @@ static const struct mtk_soc_data mt7988_data = {
+ 		.dma_l4_valid = RX_DMA_L4_VALID_V2,
+ 		.dma_max_len = MTK_TX_DMA_BUF_LEN_V2,
+ 		.dma_len_offset = 8,
+-		.dma_size = MTK_DMA_SIZE(2K),
++		.dma_size = MTK_DMA_SIZE(1K),
+ 	},
+ };
+ 
+-- 
+2.49.0
+

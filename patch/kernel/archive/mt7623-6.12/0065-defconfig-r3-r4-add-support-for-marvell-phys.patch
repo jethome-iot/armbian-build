@@ -1,0 +1,34 @@
+From 5800d4e25263a9dcc0bfaa0171713ebd1e3710be Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Sun, 29 Dec 2024 20:54:12 +0100
+Subject: [PATCH 65/93] defconfig: r3/r4: add support for marvell phys
+
+---
+ arch/arm64/configs/mt7986a_bpi-r3_defconfig | 2 ++
+ arch/arm64/configs/mt7988a_bpi-r4_defconfig | 3 +++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/arch/arm64/configs/mt7986a_bpi-r3_defconfig b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+index fccecc3b2375..a48693160283 100644
+--- a/arch/arm64/configs/mt7986a_bpi-r3_defconfig
++++ b/arch/arm64/configs/mt7986a_bpi-r3_defconfig
+@@ -1263,3 +1263,5 @@ CONFIG_EXTRA_FIRMWARE="airoha/EthMD32.dm.bin airoha/EthMD32.DSP.bin"
+ CONFIG_EXTRA_FIRMWARE_DIR="utils/firmware/"
+ 
+ CONFIG_PANIC_TIMEOUT=30
++
++CONFIG_MARVELL_PHY=m
+diff --git a/arch/arm64/configs/mt7988a_bpi-r4_defconfig b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+index 64bd2251d281..3818f17e94a7 100644
+--- a/arch/arm64/configs/mt7988a_bpi-r4_defconfig
++++ b/arch/arm64/configs/mt7988a_bpi-r4_defconfig
+@@ -1292,3 +1292,6 @@ CONFIG_MHI_NET=m
+ CONFIG_MHI_WWAN_CTRL=m
+ CONFIG_MHI_WWAN_MBIM=m
+ CONFIG_MTK_T7XX=m
++
++CONFIG_MARVELL_PHY=m
++CONFIG_MARVELL_10G_PHY=m
+-- 
+2.49.0
+

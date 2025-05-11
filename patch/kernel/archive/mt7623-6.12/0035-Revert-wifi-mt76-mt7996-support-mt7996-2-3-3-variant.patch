@@ -1,0 +1,175 @@
+From 0e4f0718fd6bbc9de61d80436961d58bf01010ac Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 26 Sep 2024 19:33:44 +0200
+Subject: [PATCH 35/93] Revert "wifi: mt76: mt7996: support mt7996 2+3+3
+ variant"
+
+This reverts commit 712693f7abfedb0303b493e33a6a561587178cb8.
+---
+ .../wireless/mediatek/mt76/mt7996/eeprom.c    |  2 --
+ .../net/wireless/mediatek/mt76/mt7996/init.c  | 25 -------------------
+ .../net/wireless/mediatek/mt76/mt7996/mcu.c   |  9 +------
+ .../wireless/mediatek/mt76/mt7996/mt7996.h    | 17 ++-----------
+ .../net/wireless/mediatek/mt76/mt7996/regs.h  |  1 -
+ 5 files changed, 3 insertions(+), 51 deletions(-)
+
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/eeprom.c b/drivers/net/wireless/mediatek/mt76/mt7996/eeprom.c
+index 7e2d585a2e21..4a8237118287 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7996/eeprom.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7996/eeprom.c
+@@ -26,8 +26,6 @@ static char *mt7996_eeprom_name(struct mt7996_dev *dev)
+ {
+ 	switch (mt76_chip(&dev->mt76)) {
+ 	case 0x7990:
+-		if (dev->var_type == MT7996_VAR_TYPE_233)
+-			return MT7996_EEPROM_DEFAULT_233;
+ 		return MT7996_EEPROM_DEFAULT;
+ 	case 0x7992:
+ 		return MT7992_EEPROM_DEFAULT;
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/init.c b/drivers/net/wireless/mediatek/mt76/mt7996/init.c
+index abfd2154b8b3..d8a013812d1e 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7996/init.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7996/init.c
+@@ -881,27 +881,6 @@ static void mt7996_wed_rro_work(struct work_struct *work)
+ #endif
+ }
+ 
+-static int mt7996_chip_variant_init(struct mt7996_dev *dev)
+-{
+-	u32 val = mt76_rr(dev, MT_PAD_GPIO);
+-
+-	switch (mt76_chip(&dev->mt76)) {
+-	case 0x7990:
+-		if (u32_get_bits(val, MT_PAD_GPIO_2ADIE_TBTC))
+-			dev->var_type = MT7996_VAR_TYPE_233;
+-		else
+-			dev->var_type = MT7996_VAR_TYPE_444;
+-		break;
+-	case 0x7992:
+-		dev->var_type = MT7992_VAR_TYPE_44;
+-		break;
+-	default:
+-		return -EINVAL;
+-	}
+-
+-	return 0;
+-}
+-
+ static int mt7996_init_hardware(struct mt7996_dev *dev)
+ {
+ 	int ret, idx;
+@@ -917,10 +896,6 @@ static int mt7996_init_hardware(struct mt7996_dev *dev)
+ 	INIT_LIST_HEAD(&dev->wed_rro.poll_list);
+ 	spin_lock_init(&dev->wed_rro.lock);
+ 
+-	ret = mt7996_chip_variant_init(dev);
+-	if (ret)
+-		return ret;
+-
+ 	ret = mt7996_dma_init(dev);
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/mcu.c b/drivers/net/wireless/mediatek/mt76/mt7996/mcu.c
+index b74a1d5c5d4a..265958f7b787 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7996/mcu.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7996/mcu.c
+@@ -17,11 +17,6 @@
+ 		_fw = MT7992_##name;				\
+ 		break;						\
+ 	case 0x7990:						\
+-		if ((_dev)->var_type == MT7996_VAR_TYPE_233)	\
+-			_fw = MT7996_##name##_233;		\
+-		else						\
+-			_fw = MT7996_##name;			\
+-		break;						\
+ 	default:						\
+ 		_fw = MT7996_##name;				\
+ 		break;						\
+@@ -2859,7 +2854,6 @@ static int __mt7996_load_ram(struct mt7996_dev *dev, const char *fw_type,
+ 
+ static int mt7996_load_ram(struct mt7996_dev *dev)
+ {
+-	const char *dsp_name;
+ 	int ret;
+ 
+ 	ret = __mt7996_load_ram(dev, "WM", fw_name(dev, FIRMWARE_WM),
+@@ -2867,8 +2861,7 @@ static int mt7996_load_ram(struct mt7996_dev *dev)
+ 	if (ret)
+ 		return ret;
+ 
+-	dsp_name = is_mt7996(&dev->mt76) ? MT7996_FIRMWARE_DSP : MT7992_FIRMWARE_DSP;
+-	ret = __mt7996_load_ram(dev, "DSP", dsp_name,
++	ret = __mt7996_load_ram(dev, "DSP", fw_name(dev, FIRMWARE_DSP),
+ 				MT7996_RAM_TYPE_DSP);
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/mt7996.h b/drivers/net/wireless/mediatek/mt76/mt7996/mt7996.h
+index e9fc61344207..ab8c9070630b 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7996/mt7996.h
++++ b/drivers/net/wireless/mediatek/mt76/mt7996/mt7996.h
+@@ -34,17 +34,12 @@
+ #define MT7996_FIRMWARE_DSP		"mediatek/mt7996/mt7996_dsp.bin"
+ #define MT7996_ROM_PATCH		"mediatek/mt7996/mt7996_rom_patch.bin"
+ 
+-#define MT7996_FIRMWARE_WA_233		"mediatek/mt7996/mt7996_wa_233.bin"
+-#define MT7996_FIRMWARE_WM_233		"mediatek/mt7996/mt7996_wm_233.bin"
+-#define MT7996_ROM_PATCH_233		"mediatek/mt7996/mt7996_rom_patch_233.bin"
+-
+ #define MT7992_FIRMWARE_WA		"mediatek/mt7996/mt7992_wa.bin"
+ #define MT7992_FIRMWARE_WM		"mediatek/mt7996/mt7992_wm.bin"
+ #define MT7992_FIRMWARE_DSP		"mediatek/mt7996/mt7992_dsp.bin"
+ #define MT7992_ROM_PATCH		"mediatek/mt7996/mt7992_rom_patch.bin"
+ 
+ #define MT7996_EEPROM_DEFAULT		"mediatek/mt7996/mt7996_eeprom.bin"
+-#define MT7996_EEPROM_DEFAULT_233	"mediatek/mt7996/mt7996_eeprom_233.bin"
+ #define MT7992_EEPROM_DEFAULT		"mediatek/mt7996/mt7992_eeprom.bin"
+ #define MT7996_EEPROM_SIZE		7680
+ #define MT7996_EEPROM_BLOCK_SIZE	16
+@@ -94,14 +89,6 @@ struct mt7996_sta;
+ struct mt7996_dfs_pulse;
+ struct mt7996_dfs_pattern;
+ 
+-enum mt7996_var_type {
+-	MT7996_VAR_TYPE_444,
+-	MT7996_VAR_TYPE_233,
+-
+-	/* mt7992 */
+-	MT7992_VAR_TYPE_44,
+-};
+-
+ enum mt7996_ram_type {
+ 	MT7996_RAM_TYPE_WM,
+ 	MT7996_RAM_TYPE_WA,
+@@ -342,7 +329,6 @@ struct mt7996_dev {
+ 	spinlock_t reg_lock;
+ 
+ 	u8 wtbl_size_group;
+-	u8 var_type;
+ };
+ 
+ enum {
+@@ -420,7 +406,8 @@ mt7996_band_valid(struct mt7996_dev *dev, u8 band)
+ 		return band <= MT_BAND1;
+ 
+ 	/* tri-band support */
+-	if (band <= MT_BAND2 && dev->var_type)
++	if (band <= MT_BAND2 &&
++	    mt76_get_field(dev, MT_PAD_GPIO, MT_PAD_GPIO_ADIE_COMB) <= 1)
+ 		return true;
+ 
+ 	return band == MT_BAND0 || band == MT_BAND2;
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/regs.h b/drivers/net/wireless/mediatek/mt76/mt7996/regs.h
+index 734abec45676..47b429d8bfbe 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt7996/regs.h
++++ b/drivers/net/wireless/mediatek/mt76/mt7996/regs.h
+@@ -662,7 +662,6 @@ enum offs_rev {
+ 
+ #define MT_PAD_GPIO				0x700056f0
+ #define MT_PAD_GPIO_ADIE_COMB			GENMASK(16, 15)
+-#define MT_PAD_GPIO_2ADIE_TBTC			BIT(19)
+ 
+ #define MT_HW_REV				0x70010204
+ #define MT_HW_REV1				0x8a00
+-- 
+2.49.0
+

@@ -1,0 +1,117 @@
+From f0ecaa2e9f20dd904fc6b94ce3682d4766fe51ef Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Mon, 14 Apr 2025 11:18:07 +0200
+Subject: [PATCH 85/93] its: r4: add 2g5 config (not working yet)
+
+looks like current firmware is not compatible with old driver
+
+phy-fw-node in mt7988a.dtsi differs
+
+old one:
+		phyfw: phy-firmware@f000000 {
+			compatible = "mediatek,2p5gphy-fw";
+			reg = <0 0x0f000000 0 0x8000>,
+			      <0 0x0f100000 0 0x20000>,
+			      <0 0x0f0f0000 0 0x200>;
+		};
+
+new one:
+		phyfw: phy-firmware@f000000 {
+			compatible = "mediatek,2p5gphy-fw";
+			reg = <0 0x0f100000 0 0x20000>,
+			      <0 0x0f0f0018 0 0x20>;
+		};
+
+root@bpi-r4-8G:~# modprobe mediatek-2p5ge
+root@bpi-r4-8G:~# lsmod
+Module                  Size  Used by
+mediatek_2p5ge         12288  0
+cfg80211              815104  0
+fuse                  151552  1
+ip_tables              24576  0
+x_tables               32768  1 ip_tables
+root@bpi-r4-8G:~# ip a a 192.168.0.19/24 dev eth1
+root@bpi-r4-8G:~# ip link set eth1 up
+[   75.731776] Unable to handle kernel access to user memory outside uaccess routines at virtual address 0000000000000210
+[   75.742533] Mem abort info:
+[   75.745317]   ESR = 0x0000000096000005
+[   75.749066]   EC = 0x25: DABT (current EL), IL = 32 bits
+[   75.754387]   SET = 0, FnV = 0
+[   75.757439]   EA = 0, S1PTW = 0
+[   75.760600]   FSC = 0x05: level 1 translation fault
+[   75.765471] Data abort info:
+[   75.768345]   ISV = 0, ISS = 0x00000005, ISS2 = 0x00000000
+[   75.773835]   CM = 0, WnR = 0, TnD = 0, TagAccess = 0
+[   75.778885]   GCS = 0, Overlay = 0, DirtyBit = 0, Xs = 0
+[   75.784204] user pgtable: 4k pages, 39-bit VAs, pgdp=00000001021d6000
+[   75.790641] [0000000000000210] pgd=0000000000000000, p4d=0000000000000000, pud=0000000000000000
+[   75.799369] Internal error: Oops: 0000000096000005 [#1] SMP
+[   75.804932] Modules linked in: mediatek_2p5ge cfg80211 fuse ip_tables x_tables
+[   75.812153] CPU: 0 UID: 0 PID: 3264 Comm: ip Not tainted 6.12.23-bpi-r4-main #1
+[   75.819452] Hardware name: Bananapi BPI-R4 2.5GE (DT)
+[   75.824491] pstate: 00400005 (nzcv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+[   75.831440] pc : mt7988_2p5ge_phy_config_init+0x50/0x38c [mediatek_2p5ge]
+[   75.838221] lr : mt7988_2p5ge_phy_config_init+0x44/0x38c [mediatek_2p5ge]
+[   75.844997] sp : ffffffc0823733b0
+[   75.848301] x29: ffffffc0823733d0 x28: 0000000000000000 x27: ffffff80c1fd7080
+[   75.855429] x26: 0000000000000000 x25: ffffff80c1fd4000 x24: 0000000000000000
+[   75.862556] x23: 0000000000000001 x22: ffffff80c4b4b440 x21: 0000000000000000
+[   75.869682] x20: ffffff80c174a800 x19: ffffff80c174a800 x18: 0000000000000000
+[   75.876808] x17: 0000000000000000 x16: 0000000000000000 x15: 0000007fdf4b3e88
+[   75.883933] x14: 0000000000000000 x13: 0000000000000001 x12: 0000000000000000
+[   75.891058] x11: 0000000000000000 x10: 00000000000840e0 x9 : 0000000000000003
+[   75.898183] x8 : 0101010101010101 x7 : 6d616e2d6e69616d x6 : 1e0e1a00f2ade4ef
+[   75.905309] x5 : 6f642d72001a0e1e x4 : 8080808000000000 x3 : 837bbb2b916b2378
+[   75.912435] x2 : 0000000000000073 x1 : 00000000ffffffea x0 : 0000000000000000
+[   75.919563] Call trace:
+[   75.921999]  mt7988_2p5ge_phy_config_init+0x50/0x38c [mediatek_2p5ge]
+[   75.928428]  phy_init_hw+0x68/0xac
+[   75.931824]  phy_attach_direct+0x174/0x37c
+[   75.935911]  phylink_fwnode_phy_connect+0xb0/0x130
+[   75.940692]  phylink_of_phy_connect+0x1c/0x28
+[   75.945039]  mtk_open+0x38/0xb40
+---
+ bpi-r4.its | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/bpi-r4.its b/bpi-r4.its
+index de0ed5023654..5f64a025d333 100644
+--- a/bpi-r4.its
++++ b/bpi-r4.its
+@@ -29,6 +29,17 @@
+ 				algo = "sha1";
+ 			};
+ 		};
++		fdt-base-2g5 {
++			description = "Flattened Device Tree blob";
++			data = /incbin/("./arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-2g5.dtb");
++			type = "flat_dt";
++			arch = "arm64";
++			load = <0x47000000>;
++			compression = "none";
++			hash-1 {
++				algo = "sha1";
++			};
++		};
+ 		fdt-ov-sd {
+ 			description = "Flattened Device Tree blob";
+ 			data = /incbin/("./arch/arm64/boot/dts/mediatek/mt7988a-bananapi-bpi-r4-sd.dtbo");
+@@ -72,6 +83,15 @@
+ 				algo = "sha1";
+ 			};
+ 		};
++		conf-base-2g5 {
++			description = "Boot Linux kernel with base FDT blob";
++			kernel = "kernel-1";
++			fdt = "fdt-base-2g5";
++			//ramdisk = "ramdisk-1";
++			hash-1 {
++				algo = "sha1";
++			};
++		};
+ 		conf-sd {
+ 			description = "Boot Linux kernel with SD FDT blob";
+ 			kernel = "kernel-1";
+-- 
+2.49.0
+

@@ -1,0 +1,70 @@
+From 1b9b5a35ebd87bc37ace2cf2898c5836d84591ff Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 21 Nov 2024 18:11:11 +0100
+Subject: [PATCH 60/93] Revert "ci: try to fix build-error by disabling
+ deb-creation for now"
+
+This reverts commit 8340652081b705b88617ac8b8621d5a62d34bb17.
+---
+ .github/workflows/build.yml | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/.github/workflows/build.yml b/.github/workflows/build.yml
+index 9d318dc0e82d..763899315aec 100644
+--- a/.github/workflows/build.yml
++++ b/.github/workflows/build.yml
+@@ -73,7 +73,7 @@ jobs:
+           bash build.sh cryptodev
+       - name: Pack for bananapi-r2
+         run: |
+-          #bash build.sh pack_debs
++          bash build.sh pack_debs
+           bash build.sh pack
+ 
+       - name: Build for bananapi-r64
+@@ -84,7 +84,7 @@ jobs:
+           bash build.sh cryptodev
+       - name: Pack for bananapi-r64
+         run: |
+-          #bash build.sh pack_debs
++          bash build.sh pack_debs
+           bash build.sh pack
+ 
+       - name: Build for bananapi-r2pro
+@@ -94,7 +94,7 @@ jobs:
+           bash build.sh build
+       - name: Pack for bananapi-r2pro
+         run: |
+-          #bash build.sh pack_debs
++          bash build.sh pack_debs
+           bash build.sh pack
+ 
+       - name: Build for bananapi-r3 (mini)
+@@ -104,7 +104,7 @@ jobs:
+           bash build.sh build
+       - name: Pack for bananapi-r3
+         run: |
+-          #bash build.sh pack_debs
++          bash build.sh pack_debs
+           bash build.sh pack
+ 
+       - name: Build for bananapi-r4
+@@ -114,7 +114,7 @@ jobs:
+           bash build.sh build
+       - name: Pack for bananapi-r4
+         run: |
+-          #bash build.sh pack_debs
++          bash build.sh pack_debs
+           bash build.sh pack
+ 
+       - name: Upload binaries to release
+@@ -136,5 +136,5 @@ jobs:
+           target_commitish: ${{ github.sha }}
+           files: |
+             ../SD/*
++            ../*.deb
+             *.itb
+-            #../*.deb
+-- 
+2.49.0
+

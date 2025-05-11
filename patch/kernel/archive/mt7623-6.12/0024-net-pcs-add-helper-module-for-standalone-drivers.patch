@@ -1,0 +1,190 @@
+From 8a7a86558d3e8ec226c06f56177088956464ccf8 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Mon, 15 Jul 2024 01:04:13 +0100
+Subject: [PATCH 24/93] net: pcs: add helper module for standalone drivers
+
+Implement helper module for standalone PCS drivers which allows
+standaline PCS drivers to register and users to get instances of
+'struct phylink_pcs' using device tree nodes.
+
+At this point only a single instance for each device tree node is
+supported, once we got devices providing more than one PCS we can
+extend it and introduce an xlate function as well as '#pcs-cells',
+similar to how this is done by the PHY framework.
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ drivers/net/pcs/Kconfig            |  4 ++
+ drivers/net/pcs/Makefile           |  1 +
+ drivers/net/pcs/pcs-standalone.c   | 99 ++++++++++++++++++++++++++++++
+ include/linux/pcs/pcs-standalone.h | 25 ++++++++
+ 4 files changed, 129 insertions(+)
+ create mode 100644 drivers/net/pcs/pcs-standalone.c
+ create mode 100644 include/linux/pcs/pcs-standalone.h
+
+diff --git a/drivers/net/pcs/Kconfig b/drivers/net/pcs/Kconfig
+index 27ab1e6a1337..084d8af3640b 100644
+--- a/drivers/net/pcs/Kconfig
++++ b/drivers/net/pcs/Kconfig
+@@ -5,6 +5,10 @@
+ 
+ menu "PCS device drivers"
+ 
++config PCS_STANDALONE
++	tristate
++	select PHYLINK
++
+ config PCS_XPCS
+ 	tristate "Synopsys DesignWare Ethernet XPCS"
+ 	select PHYLINK
+diff --git a/drivers/net/pcs/Makefile b/drivers/net/pcs/Makefile
+index 7070d821d9b9..b876cb2157b1 100644
+--- a/drivers/net/pcs/Makefile
++++ b/drivers/net/pcs/Makefile
+@@ -4,6 +4,7 @@
+ pcs_xpcs-$(CONFIG_PCS_XPCS)	:= pcs-xpcs.o pcs-xpcs-plat.o \
+ 				   pcs-xpcs-nxp.o pcs-xpcs-wx.o
+ 
++obj-$(CONFIG_PCS_STANDALONE)	+= pcs-standalone.o
+ obj-$(CONFIG_PCS_XPCS)		+= pcs_xpcs.o
+ obj-$(CONFIG_PCS_LYNX)		+= pcs-lynx.o
+ obj-$(CONFIG_PCS_MTK_LYNXI)	+= pcs-mtk-lynxi.o
+diff --git a/drivers/net/pcs/pcs-standalone.c b/drivers/net/pcs/pcs-standalone.c
+new file mode 100644
+index 000000000000..1569793328a1
+--- /dev/null
++++ b/drivers/net/pcs/pcs-standalone.c
+@@ -0,0 +1,99 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++/*
++ * Helpers for standalone PCS drivers
++ *
++ * Copyright (C) 2024 Daniel Golle <daniel@makrotopia.org>
++ */
++
++#include <linux/pcs/pcs-standalone.h>
++#include <linux/phylink.h>
++
++static LIST_HEAD(pcs_list);
++static DEFINE_MUTEX(pcs_mutex);
++
++static const struct phy_ops phylink_pcs_phy_ops = {
++	.owner = THIS_MODULE,
++};
++
++struct pcs_standalone {
++	struct device *dev;
++	struct phylink_pcs *pcs;
++	struct list_head list;
++};
++
++static void devm_pcs_provider_release(struct device *dev, void *res)
++{
++	struct pcs_standalone *pcssa = (struct pcs_standalone *)res;
++
++	mutex_lock(&pcs_mutex);
++	list_del(&pcssa->list);
++	mutex_unlock(&pcs_mutex);
++}
++
++int devm_pcs_register(struct device *dev, struct phylink_pcs *pcs)
++{
++	struct pcs_standalone *pcssa;
++
++	pcssa = devres_alloc(devm_pcs_provider_release, sizeof(*pcssa),
++			     GFP_KERNEL);
++	if (!pcssa)
++		return -ENOMEM;
++
++	devres_add(dev, pcssa);
++	pcssa->pcs = pcs;
++	pcssa->dev = dev;
++
++	mutex_lock(&pcs_mutex);
++	list_add_tail(&pcssa->list, &pcs_list);
++	mutex_unlock(&pcs_mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(devm_pcs_register);
++
++static struct pcs_standalone *of_pcs_locate(const struct device_node *_np, u32 index)
++{
++	struct device_node *np;
++	struct pcs_standalone *iter, *pcssa = NULL;
++
++	if (!_np)
++		return NULL;
++
++	np = of_parse_phandle(_np, "pcs-handle", index);
++	if (!np)
++		return NULL;
++
++	mutex_lock(&pcs_mutex);
++	list_for_each_entry(iter, &pcs_list, list) {
++		if (iter->dev->of_node != np)
++			continue;
++
++		pcssa = iter;
++		break;
++	}
++	mutex_unlock(&pcs_mutex);
++
++	of_node_put(np);
++
++	return pcssa ?: ERR_PTR(-ENODEV);
++}
++
++struct phylink_pcs *devm_of_pcs_get(struct device *dev,
++				    const struct device_node *np,
++				    unsigned int index)
++{
++	struct pcs_standalone *pcssa;
++
++	pcssa = of_pcs_locate(np ?: dev->of_node, index);
++	if (IS_ERR_OR_NULL(pcssa))
++		return ERR_PTR(PTR_ERR(pcssa));
++
++	device_link_add(dev, pcssa->dev, DL_FLAG_AUTOREMOVE_CONSUMER);
++
++	return pcssa->pcs;
++}
++EXPORT_SYMBOL_GPL(devm_of_pcs_get);
++
++MODULE_DESCRIPTION("Helper for standalone PCS drivers");
++MODULE_AUTHOR("Daniel Golle <daniel@makrotopia.org>");
++MODULE_LICENSE("GPL");
+diff --git a/include/linux/pcs/pcs-standalone.h b/include/linux/pcs/pcs-standalone.h
+new file mode 100644
+index 000000000000..ad7819f4a2eb
+--- /dev/null
++++ b/include/linux/pcs/pcs-standalone.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef __LINUX_PCS_STANDALONE_H
++#define __LINUX_PCS_STANDALONE_H
++
++#include <linux/device.h>
++#include <linux/phylink.h>
++#include <linux/phy/phy.h>
++#include <linux/of.h>
++
++#if IS_ENABLED(CONFIG_PCS_STANDALONE)
++int devm_pcs_register(struct device *dev, struct phylink_pcs *pcs);
++struct phylink_pcs *devm_of_pcs_get(struct device *dev,
++				    const struct device_node *np, unsigned int index);
++#else
++static inline int devm_pcs_register(struct device *dev, struct phylink_pcs *pcs);
++	return -ENOTSUPP;
++}
++static inline struct phylink_pcs *devm_of_pcs_get(struct device *dev,
++						  const struct device_node *np,
++						  unsigned int index)
++{
++	return ERR_PTR(-ENOTSUPP);
++}
++#endif /* CONFIG_PCS_STANDALONE */
++#endif /* __LINUX_PCS_STANDALONE_H */
+-- 
+2.49.0
+

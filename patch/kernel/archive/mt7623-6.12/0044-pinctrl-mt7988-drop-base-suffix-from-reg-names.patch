@@ -1,0 +1,27 @@
+From eeae014fdf5787295cfc8c0a353139406687e5a0 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Wed, 2 Oct 2024 14:00:33 +0200
+Subject: [PATCH 44/93] pinctrl: mt7988: drop base suffix from reg-names
+
+---
+ drivers/pinctrl/mediatek/pinctrl-mt7988.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/pinctrl/mediatek/pinctrl-mt7988.c b/drivers/pinctrl/mediatek/pinctrl-mt7988.c
+index 9d011f3dd773..5479f4fa47a7 100644
+--- a/drivers/pinctrl/mediatek/pinctrl-mt7988.c
++++ b/drivers/pinctrl/mediatek/pinctrl-mt7988.c
+@@ -1469,8 +1469,8 @@ static const struct mtk_eint_hw mt7988_eint_hw = {
+ };
+ 
+ static const char * const mt7988_pinctrl_register_base_names[] = {
+-	"gpio_base",	 "iocfg_tr_base", "iocfg_br_base",
+-	"iocfg_rb_base", "iocfg_lb_base", "iocfg_tl_base",
++	"gpio",	 "iocfg_tr", "iocfg_br",
++	"iocfg_rb", "iocfg_lb", "iocfg_tl",
+ };
+ 
+ static struct mtk_pin_soc mt7988_data = {
+-- 
+2.49.0
+

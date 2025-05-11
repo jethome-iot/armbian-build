@@ -1,0 +1,25 @@
+From 3fcbd40b8e372e620165829901672840e7a645e2 Mon Sep 17 00:00:00 2001
+From: Frank Wunderlich <frank-w@public-files.de>
+Date: Thu, 24 Apr 2025 17:50:47 +0200
+Subject: [PATCH 93/93] build.conf: make ramdisk larger
+
+---
+ build.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build.conf b/build.conf
+index 344ccacac934..7681a4e75ce5 100644
+--- a/build.conf
++++ b/build.conf
+@@ -6,7 +6,7 @@ uploaddir=/var/lib/tftp
+ #uploaddir=/boot/bananapi/bpi-r2/linux
+ 
+ builddir=../build
+-ramdisksize=4G
++ramdisksize=8G
+ #numproc=8
+ 
+ board=bpi-r2
+-- 
+2.49.0
+
