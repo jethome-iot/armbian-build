@@ -15,12 +15,12 @@ if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
 	env import -t ${kernel_addr_r} ${filesize}
 fi
 
-
+setenv mmckernfile boot/uImage
 setenv bootargs "console=ttyS2,115200n1 root=${rootdev} rw rootfstype=${rootfs} rootwait audit=0 loglevel=${verbosity}"
 ext4load ${devtype} ${devnum}:${mmcpart} ${fdtaddr} ${mmcfdtfile}
 ext4load ${devtype} ${devnum}:${mmcpart} ${rdaddr} ${mmcinitrdfile}
 ext4load ${devtype} ${devnum}:${mmcpart} ${kernel_addr_r} ${mmckernfile}
 echo "Booting ${mmckernfile} ${mmcinitrdfile} ${mmcfdtfile} from: ${devtype} ${devnum}:${mmcpart} using bootargs=${bootargs}"
-bootz ${kernel_addr_r} ${rdaddr} ${fdtaddr}
+bootm ${kernel_addr_r} ${rdaddr} ${fdtaddr}
 # Recompile with:
 # mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
