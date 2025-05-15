@@ -1,0 +1,90 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Thu, 11 Jul 2024 17:12:46 +0300
+Subject: Refix j200
+
+---
+ arch/arm/dts/meson-sm1-jethome-jethub-j200.dts | 57 ++++++++++
+ include/configs/jethub.h                       |  1 +
+ 2 files changed, 58 insertions(+)
+
+diff --git a/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts b/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts
+index 111111111111..222222222222 100644
+--- a/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts
++++ b/arch/arm/dts/meson-sm1-jethome-jethub-j200.dts
+@@ -652,3 +652,60 @@
+ 		reg = <0x32 0x20>;
+ 	};
+ };
++
++&cpu_thermal {
++	trips {
++		cpu_passive: cpu-passive {
++			temperature = <70000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "passive"; /*  */
++		};
++
++		cpu_hot: cpu-hot {
++			temperature = <85000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "hot";
++		};
++
++		cpu_critical: cpu-critical {
++			temperature = <90000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "critical";
++		};
++	};
++
++	cooling-maps {
++		map0 {
++			trip = <&cpu_passive>;
++			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++
++		map1 {
++			trip = <&cpu_hot>;
++			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
++					<&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&ddr_thermal {
++	trips {
++		ddr_passive: ddr-passive {
++			temperature = <70000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "passive";
++		};
++
++		ddr_critical: ddr-critical {
++			temperature = <85000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "critical";
++		};
++	};
++
++};
+diff --git a/include/configs/jethub.h b/include/configs/jethub.h
+index 111111111111..222222222222 100644
+--- a/include/configs/jethub.h
++++ b/include/configs/jethub.h
+@@ -22,6 +22,7 @@
+ 		"if gpio input aobus-banks10; then " \
+ 		"run bootcmd_mmc1; " \
+ 		"run bootcmd_mmc0; " \
++		"run bootcmd_mmc1; " \
+ 		"run bootcmd_usb0;" \
+ 		"fi;\0"
+ #else
+-- 
+Armbian
+
