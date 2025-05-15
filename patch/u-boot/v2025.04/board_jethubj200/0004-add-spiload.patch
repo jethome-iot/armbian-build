@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <adeep@lexina.in>
+Date: Fri, 12 Jul 2024 10:36:09 +0300
+Subject: add spiload
+
+---
+ configs/jethub_j200_defconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/jethub_j200_defconfig b/configs/jethub_j200_defconfig
+index 111111111111..222222222222 100644
+--- a/configs/jethub_j200_defconfig
++++ b/configs/jethub_j200_defconfig
+@@ -54,6 +54,7 @@ CONFIG_DM_MTD=y
+ CONFIG_DM_SPI_FLASH=y
+ CONFIG_SPI_FLASH_WINBOND=y
+ CONFIG_SPI_FLASH_XTX=y
++CONFIG_SPI_LOAD=y
+ CONFIG_PHY_REALTEK=y
+ CONFIG_DM_MDIO=y
+ CONFIG_DM_MDIO_MUX=y
+-- 
+Armbian
+
