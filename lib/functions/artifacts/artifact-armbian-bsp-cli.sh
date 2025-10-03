@@ -11,6 +11,7 @@ function artifact_armbian-bsp-cli_config_dump() {
 	artifact_input_variables[BOARD]="${BOARD}"
 	artifact_input_variables[BRANCH]="${BRANCH}"
 	artifact_input_variables[EXTRA_BSP_NAME]="${EXTRA_BSP_NAME}"
+	artifact_input_variables[RELEASE]="${RELEASE}"
 }
 
 function artifact_armbian-bsp-cli_prepare_version() {
