@@ -19,6 +19,7 @@ function artifact_kernel_config_dump() {
 	artifact_input_variables[KERNELPATCHDIR]="${KERNELPATCHDIR}"
 	artifact_input_variables[ARCH]="${ARCH}"
 	artifact_input_variables[EXTRAWIFI]="${EXTRAWIFI:-"yes"}"
+	artifact_input_variables[RELEASE]="${RELEASE}"
 }
 
 # This is run in a logging section.
