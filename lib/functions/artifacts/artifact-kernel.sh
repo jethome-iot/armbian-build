@@ -21,6 +21,7 @@ function artifact_kernel_config_dump() {
 	artifact_input_variables[EXTRAWIFI]="${EXTRAWIFI:-"yes"}"
 	# Changes the kernel version: the artifact config dump in the matrix must see it.
 	artifact_input_variables[KERNEL_CVE_PATCHES]="${KERNEL_CVE_PATCHES:-"no"}"
+	artifact_input_variables[RELEASE]="${RELEASE}"
 }
 
 # This is run in a logging section.
