@@ -124,7 +124,7 @@ function obtain_complete_artifact() {
 			declare artifact_reversioning_hash="undetermined"
 			artifact_calculate_reversioning_hash
 			declare artifact_reversioning_hash_short="${artifact_reversioning_hash:0:4}"
-			artifact_version="${artifact_version}-R${artifact_reversioning_hash_short}~${RELEASE}"
+			artifact_version="${artifact_version}-R${artifact_reversioning_hash_short}-${RELEASE}"
 			display_alert "Final artifact_version with reversioning hash" "${artifact_version}" "debug"
 
 			debug_dict artifact_map_packages
