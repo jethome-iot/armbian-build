@@ -126,7 +126,8 @@ function create_new_rootfs_cache_via_debootstrap() {
 			else
 				export GIT_FIXED_WORKDIR="mmdebstrap-debian-devel"
 				#FIXME: branch should be a variable eventually
-				fetch_from_repo "https://gitlab.mister-muffin.de/josch/mmdebstrap" "${GIT_FIXED_WORKDIR}" "branch:main"
+				#fetch_from_repo "https://gitlab.mister-muffin.de/josch/mmdebstrap" "${GIT_FIXED_WORKDIR}" "branch:main"
+				fetch_from_repo "https://salsa.debian.org/debian/mmdebstrap" "${GIT_FIXED_WORKDIR}" "branch:master"
 				debootstrap_wanted_dir="${SRC}/cache/sources/${GIT_FIXED_WORKDIR}"
 				debootstrap_default_script="sid"
 				debootstrap_version="$(sed 's/^## \[\([^]]*\)\].*/\1/; q' "${debootstrap_wanted_dir}/CHANGELOG.md")"
