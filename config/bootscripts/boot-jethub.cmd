@@ -16,6 +16,11 @@ setenv rootfstype "ext4"
 setenv docker_optimizations "on"
 setenv prefix "boot/"
 
+# Debug: show partition table
+echo "=== Boot device partition table ==="
+mmc dev ${devnum}
+mmc part
+
 # Show what uboot default fdtfile is
 echo "U-boot default fdtfile: ${fdtfile}"
 echo "Current variant: ${variant}"
@@ -27,12 +32,46 @@ if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
 fi
 
 # get PARTUUID of first partition on SD/eMMC it was loaded from
-# mmc 0 is always mapped to device u-boot (2016.09+) was loaded from
 if test "${devtype}" = "mmc"; then part uuid mmc ${devnum}:1 partuuid; fi
+
+# Determine root device based on boot device
+# J300 mapping: mmc0 = SD (mmcblk0), mmc1 = eMMC (mmcblk1)
+if test "$board" = "s7d_bm202"; then
+    if test -n "${partuuid}"; then
+        setenv rootdev "PARTUUID=${partuuid}"
+    else
+        # devnum matches mmcblk number directly
+        if test "${devnum}" = "0"; then
+            setenv rootdev "/dev/mmcblk0p1"
+        else
+            setenv rootdev "/dev/mmcblk1p1"
+        fi
+    fi
+else
+    if test -n "${partuuid}"; then
+        setenv rootdev "PARTUUID=${partuuid}"
+    fi
+fi
+echo "Boot device: mmc ${devnum}, Root device: ${rootdev}"
 
 echo "Current fdtfile after armbianEnv: ${fdtfile}"
 
-if test "${console}" = "serial"; then setenv consoleargs "console=ttyAML0,115200n8"; fi
+# Set fdtfile for J300 if not set
+if test "$board" = "s7d_bm202"; then
+    if test -z "${fdtfile}"; then
+        setenv fdtfile "amlogic/meson-s7d-jethub-j300.dtb"
+        echo "Set fdtfile for J300: ${fdtfile}"
+    fi
+fi
+
+# Set console based on board type
+if test "${console}" = "serial"; then
+    if test "$board" = "s7d_bm202"; then
+        setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
+    else
+        setenv consoleargs "console=ttyAML0,115200n8"
+    fi
+fi
 
 setenv bootargs "root=${rootdev} rootwait rootflags=data=writeback rootfstype=${rootfstype} ${consoleargs} no_console_suspend consoleblank=0 coherent_pool=2M loglevel=${verbosity} fsck.fix=yes fsck.repair=yes net.ifnames=0 ${extraargs} ${extraboardargs}"
 
