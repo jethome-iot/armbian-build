@@ -36,11 +36,10 @@ if test "${devtype}" = "mmc"; then part uuid mmc ${devnum}:1 partuuid; fi
 
 # Determine root device based on boot device
 # J300 mapping: mmc0 = SD (mmcblk0), mmc1 = eMMC (mmcblk1)
-if test "$board" = "s7d_bm202"; then
+if test "$board" = "jethub_j300"; then
     if test -n "${partuuid}"; then
         setenv rootdev "PARTUUID=${partuuid}"
     else
-        # devnum matches mmcblk number directly
         if test "${devnum}" = "0"; then
             setenv rootdev "/dev/mmcblk0p1"
         else
@@ -57,7 +56,7 @@ echo "Boot device: mmc ${devnum}, Root device: ${rootdev}"
 echo "Current fdtfile after armbianEnv: ${fdtfile}"
 
 # Set fdtfile for J300 if not set
-if test "$board" = "s7d_bm202"; then
+if test "$board" = "jethub_j300"; then
     if test -z "${fdtfile}"; then
         setenv fdtfile "amlogic/meson-s7d-jethub-j300.dtb"
         echo "Set fdtfile for J300: ${fdtfile}"
@@ -66,7 +65,7 @@ fi
 
 # Set console based on board type
 if test "${console}" = "serial"; then
-    if test "$board" = "s7d_bm202"; then
+    if test "$board" = "jethub_j300"; then
         setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
     else
         setenv consoleargs "console=ttyAML0,115200n8"
