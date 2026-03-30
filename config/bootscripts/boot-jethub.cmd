@@ -25,31 +25,26 @@ mmc part
 echo "U-boot default fdtfile: ${fdtfile}"
 echo "Current variant: ${variant}"
 
+# Set boot partition device spec
+if test -z "${rootpart}"; then
+	setenv rootpart "1"
+fi
+setenv bootdev "${devnum}:${rootpart}"
+
 # legacy kernel values from armbianEnv.txt
-if test -e ${devtype} ${devnum} ${prefix}armbianEnv.txt; then
-	load ${devtype} ${devnum} ${scriptaddr} ${prefix}armbianEnv.txt
+if test -e ${devtype} ${bootdev} ${prefix}armbianEnv.txt; then
+	load ${devtype} ${bootdev} ${scriptaddr} ${prefix}armbianEnv.txt
 	env import -t ${scriptaddr} ${filesize}
 fi
 
-# get PARTUUID of first partition on SD/eMMC it was loaded from
-if test "${devtype}" = "mmc"; then part uuid mmc ${devnum}:1 partuuid; fi
+# Get partition UUID for root device
+if test "${devtype}" = "mmc"; then
+	part uuid mmc ${devnum}:${rootpart} partuuid
+fi
 
 # Determine root device based on boot device
-# J300 mapping: mmc0 = SD (mmcblk0), mmc1 = eMMC (mmcblk1)
-if test "$board" = "jethub_j300"; then
-    if test -n "${partuuid}"; then
-        setenv rootdev "PARTUUID=${partuuid}"
-    else
-        if test "${devnum}" = "0"; then
-            setenv rootdev "/dev/mmcblk0p1"
-        else
-            setenv rootdev "/dev/mmcblk1p1"
-        fi
-    fi
-else
-    if test -n "${partuuid}"; then
-        setenv rootdev "PARTUUID=${partuuid}"
-    fi
+if test -n "${partuuid}"; then
+    setenv rootdev "PARTUUID=${partuuid}"
 fi
 echo "Boot device: mmc ${devnum}, Root device: ${rootdev}"
 
@@ -102,22 +97,21 @@ if test "$board" = "jethub-j100"; then
 fi;
 
 
-load ${devtype} ${devnum} ${ramdisk_addr_r} ${prefix}uInitrd
-load ${devtype} ${devnum} ${kernel_addr_r} ${prefix}Image
-load ${devtype} ${devnum} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
+load ${devtype} ${bootdev} ${ramdisk_addr_r} ${prefix}uInitrd
+load ${devtype} ${bootdev} ${kernel_addr_r} ${prefix}Image
+load ${devtype} ${bootdev} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
 fdt addr ${fdt_addr_r}
 fdt resize 65536
 
-
 for overlay_file in ${overlays}; do
-	if load ${devtype} ${devnum} ${scriptaddr} ${prefix}dtb/amlogic/overlay/${overlay_prefix}-${overlay_file}.dtbo; then
+	if load ${devtype} ${bootdev} ${scriptaddr} ${prefix}dtb/amlogic/overlay/${overlay_prefix}-${overlay_file}.dtbo; then
 		echo "Applying kernel provided DT overlay ${overlay_prefix}-${overlay_file}.dtbo"
 		fdt apply ${scriptaddr} || setenv overlay_error "true"
 	fi
 done
 
 for overlay_file in ${user_overlays}; do
-	if load ${devtype} ${devnum} ${scriptaddr} ${prefix}overlay-user/${overlay_file}.dtbo; then
+	if load ${devtype} ${bootdev} ${scriptaddr} ${prefix}overlay-user/${overlay_file}.dtbo; then
 		echo "Applying user provided DT overlay ${overlay_file}.dtbo"
 		fdt apply ${scriptaddr} || setenv overlay_error "true"
 	fi
@@ -125,14 +119,14 @@ done
 
 if test "${overlay_error}" = "true"; then
 	echo "Error applying DT overlays, restoring original DT"
-	load ${devtype} ${devnum} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
+	load ${devtype} ${bootdev} ${fdt_addr_r} ${prefix}dtb/${fdtfile}
 else
-	if load ${devtype} ${devnum} ${scriptaddr} ${prefix}dtb/amlogic/overlay/${overlay_prefix}-fixup.scr; then
+	if load ${devtype} ${bootdev} ${scriptaddr} ${prefix}dtb/amlogic/overlay/${overlay_prefix}-fixup.scr; then
 		echo "Applying kernel provided DT fixup script (${overlay_prefix}-fixup.scr)"
 		source ${scriptaddr}
 	fi
-	if test -e ${devtype} ${devnum} ${prefix}fixup.scr; then
-		load ${devtype} ${devnum} ${scriptaddr} ${prefix}fixup.scr
+	if test -e ${devtype} ${bootdev} ${prefix}fixup.scr; then
+		load ${devtype} ${bootdev} ${scriptaddr} ${prefix}fixup.scr
 		echo "Applying user provided fixup script (fixup.scr)"
 		source ${scriptaddr}
 	fi
