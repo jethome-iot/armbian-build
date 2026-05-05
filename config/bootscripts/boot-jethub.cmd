@@ -4,7 +4,7 @@
 #
 
 setenv scriptaddr      "0x12000000"
-setenv kernel_addr_r  "0x14000000"
+setenv kernel_addr_r  "0x08200000"
 setenv ramdisk_addr_r "0x1A000000"
 setenv fdt_addr_r     "0x10800000"
 setenv overlay_error "false"
@@ -37,6 +37,8 @@ if test -e ${devtype} ${bootdev} ${prefix}armbianEnv.txt; then
 	env import -t ${scriptaddr} ${filesize}
 fi
 
+setenv verbosity "7"
+
 # Get partition UUID for root device
 if test "${devtype}" = "mmc"; then
 	part uuid mmc ${devnum}:${rootpart} partuuid
@@ -51,23 +53,23 @@ echo "Boot device: mmc ${devnum}, Root device: ${rootdev}"
 echo "Current fdtfile after armbianEnv: ${fdtfile}"
 
 # Set fdtfile for J300 if not set
-if test "$board" = "jethub_j300"; then
+if test "$board" = "jethub_j300y5"; then
     if test -z "${fdtfile}"; then
-        setenv fdtfile "amlogic/meson-s7d-jethub-j300.dtb"
+        setenv fdtfile "amlogic/meson-s7-jethub-j300y5.dtb"
         echo "Set fdtfile for J300: ${fdtfile}"
     fi
 fi
 
 # Set console based on board type
 if test "${console}" = "serial"; then
-    if test "$board" = "jethub_j300"; then
+    if test "$board" = "jethub_j300y5"; then
         setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
     else
         setenv consoleargs "console=ttyAML0,115200n8"
     fi
 fi
 
-setenv bootargs "root=${rootdev} rootwait rootflags=data=writeback rootfstype=${rootfstype} ${consoleargs} no_console_suspend consoleblank=0 coherent_pool=2M loglevel=${verbosity} fsck.fix=yes fsck.repair=yes net.ifnames=0 ${extraargs} ${extraboardargs}"
+setenv bootargs "root=${rootdev} rootwait rootflags=data=writeback rootfstype=${rootfstype} ${consoleargs} no_console_suspend consoleblank=0 coherent_pool=16M loglevel=${verbosity} fsck.fix=yes fsck.repair=yes net.ifnames=0 ${extraargs} ${extraboardargs}"
 
 if test -n "${board_name}"; then setenv bootargs "${bootargs} board=${board}"; fi
 
