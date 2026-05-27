@@ -52,17 +52,17 @@ echo "Boot device: mmc ${devnum}, Root device: ${rootdev}"
 
 echo "Current fdtfile after armbianEnv: ${fdtfile}"
 
-# Set fdtfile for J300 if not set
-if test "$board" = "jethub_j300y5"; then
+# Set fdtfile for J310 if not set
+if test "$board" = "jethub_j310"; then
     if test -z "${fdtfile}"; then
-        setenv fdtfile "amlogic/meson-s7-jethub-j300y5.dtb"
-        echo "Set fdtfile for J300: ${fdtfile}"
+        setenv fdtfile "amlogic/meson-s7-jethub-j310.dtb"
+        echo "Set fdtfile for J310: ${fdtfile}"
     fi
 fi
 
 # Set console based on board type
 if test "${console}" = "serial"; then
-    if test "$board" = "jethub_j300y5"; then
+    if test "$board" = "jethub_j310"; then
         setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
     else
         setenv consoleargs "console=ttyAML0,115200n8"
