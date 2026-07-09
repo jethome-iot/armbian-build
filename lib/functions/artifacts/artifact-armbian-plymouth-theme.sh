@@ -43,6 +43,8 @@ function artifact_armbian-plymouth-theme_prepare_version() {
 	artifact_deb_repo="global"
 	artifact_deb_arch="all"
 
+	artifact_release_specific="no" # arch:all, identical across releases -> keep OCI tag release-agnostic (see artifacts-obtain.sh)
+
 	return 0
 }
 
