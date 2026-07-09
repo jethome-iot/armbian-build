@@ -73,6 +73,7 @@ function obtain_complete_artifact() {
 	declare -g artifact_version="undetermined"
 	declare -g artifact_version_reason="undetermined"
 	declare -g artifact_final_version_reversioned="${REVISION}" # by default
+	declare -g artifact_release_specific="yes"                  # RELEASE codename is appended to the version/OCI tag; release-independent (arch:all) artifacts opt out by setting this to "no" in their prepare_version()
 	declare -g artifact_base_dir="undetermined"
 	declare -g artifact_final_file="undetermined"
 	declare -g artifact_final_file_basename="undetermined"
@@ -124,7 +125,13 @@ function obtain_complete_artifact() {
 			declare artifact_reversioning_hash="undetermined"
 			artifact_calculate_reversioning_hash
 			declare artifact_reversioning_hash_short="${artifact_reversioning_hash:0:4}"
-			artifact_version="${artifact_version}-R${artifact_reversioning_hash_short}-${RELEASE}"
+			artifact_version="${artifact_version}-R${artifact_reversioning_hash_short}"
+			# Append the RELEASE codename only for release-specific artifacts. Release-independent
+			# artifacts (arch:all, identical across releases) declare no RELEASE input, so the
+			# artifact-reducer collapses them to a single instance; tagging them per-release would
+			# build/cache only one release while images request per-release tags -> OCI cache miss
+			# -> DONT_BUILD_ARTIFACTS failure (exit 43). Such artifacts set artifact_release_specific=no.
+			[[ "${artifact_release_specific:-yes}" == "yes" ]] && artifact_version="${artifact_version}-${RELEASE}"
 			display_alert "Final artifact_version with reversioning hash" "${artifact_version}" "debug"
 
 			debug_dict artifact_map_packages
