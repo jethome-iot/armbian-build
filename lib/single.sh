@@ -62,10 +62,20 @@ if [[ "${OSTYPE}" == "darwin"* ]]; then
 
 	# Under Darwin/Docker, the "${SRC}" should be under "${HOME}" -- otherwise Docker will not be able to share/mount it.
 	# This is a sanity check to make sure that the user is not trying to build outside of "${HOME}".
+	# "${HOME}" is the only path shared into the Docker VM by every provider (Docker Desktop, Rancher, Colima).
+	# Docker Desktop additionally shares /Volumes, /private and /tmp by default; if the source tree lives on
+	# such a path, the check can be skipped with ALLOW_SRC_OUTSIDE_HOME=yes.
 	if [[ "${SRC}" != "${HOME}"* ]]; then
-		echo "Armbian build scripts require the Armbian directory ($SRC) to be under your home directory ($HOME) on macOS." >&2
-		echo "Please clone inside your home directory and try again." >&2
-		exit 52
+		if [[ "${ALLOW_SRC_OUTSIDE_HOME:-no}" == "yes" ]]; then
+			echo "Warning: Armbian directory ($SRC) is outside your home directory ($HOME)." >&2
+			echo "Make sure this path is in your Docker provider's file sharing list, otherwise bind mounts will fail." >&2
+		else
+			echo "Armbian build scripts require the Armbian directory ($SRC) to be under your home directory ($HOME) on macOS." >&2
+			echo "Please clone inside your home directory and try again." >&2
+			echo "If this path is shared with your Docker provider (Docker Desktop shares /Volumes by default)," >&2
+			echo "re-run with ALLOW_SRC_OUTSIDE_HOME=yes in the environment to skip this check." >&2
+			exit 52
+		fi
 	fi
 fi
 
