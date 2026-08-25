@@ -1,0 +1,41 @@
+From 9bec29ef9b6f49f3dbaeca7ae522b94ea4d0850b Mon Sep 17 00:00:00 2001
+From: Ronald Claveau <linux-kernel-dev@aliel.fr>
+Date: Wed, 5 Aug 2026 10:06:06 +0200
+Subject: [PATCH 07/12] arm64: dts: amlogic: t7: Add i2c controller node
+
+Add the T7 i2c controller node used by the Khadas VIM4
+for MCU communication.
+
+Use amlogic,meson-axg-i2c as fallback compatible.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Reviewed-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Signed-off-by: Ronald Claveau <linux-kernel-dev@aliel.fr>
+---
+ arch/arm64/boot/dts/amlogic/amlogic-t7.dtsi | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/amlogic-t7.dtsi b/arch/arm64/boot/dts/amlogic/amlogic-t7.dtsi
+index cc371fcd1896..4ab2cc224d7b 100644
+--- a/arch/arm64/boot/dts/amlogic/amlogic-t7.dtsi
++++ b/arch/arm64/boot/dts/amlogic/amlogic-t7.dtsi
+@@ -719,6 +719,16 @@ pwm_ao_cd: pwm@60000 {
+ 				status = "disabled";
+ 			};
+ 
++			i2c_m_ao_a: i2c@76000 {
++				compatible = "amlogic,t7-i2c", "amlogic,meson-axg-i2c";
++				reg = <0x0 0x76000 0x0 0x48>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++				interrupts = <GIC_SPI 330 IRQ_TYPE_EDGE_RISING>;
++				clocks = <&clkc_periphs CLKID_SYS_I2C_AO_A>;
++				status = "disabled";
++			};
++
+ 			sd_emmc_a: mmc@88000 {
+ 				compatible = "amlogic,t7-mmc", "amlogic,meson-axg-mmc";
+ 				reg = <0x0 0x88000 0x0 0x800>;
+-- 
+2.55.0
+

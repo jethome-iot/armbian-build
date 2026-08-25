@@ -1,0 +1,63 @@
+From 9094db69eb233173d81bbe1cd2e4484650114560 Mon Sep 17 00:00:00 2001
+From: Ronald Claveau <linux-kernel-dev@aliel.fr>
+Date: Wed, 5 Aug 2026 10:06:02 +0200
+Subject: [PATCH 03/12] mfd: khadas-mcu: Add per-variant configuration
+ infrastructure and VIM4 support
+
+Some values change per variant, add the structure to manage it.
+
+Add an enum khadas_mcu_type used as value to match.
+
+Also introduce khadas_mcu_fan_pdata to pass fan register address, a
+table named levels to get fan-supported levels on the MCU, and the number
+of levels to the fan sub-driver, removing the hardcoded constants.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Signed-off-by: Ronald Claveau <linux-kernel-dev@aliel.fr>
+---
+ include/linux/mfd/khadas-mcu.h | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/include/linux/mfd/khadas-mcu.h b/include/linux/mfd/khadas-mcu.h
+index a99ba2ed0e4e..e4044c251b97 100644
+--- a/include/linux/mfd/khadas-mcu.h
++++ b/include/linux/mfd/khadas-mcu.h
+@@ -70,6 +70,13 @@
+ #define KHADAS_MCU_WOL_INIT_START_REG		0x87 /* WO */
+ #define KHADAS_MCU_CMD_FAN_STATUS_CTRL_REG	0x88 /* WO */
+ 
++/* VIM4 specific registers */
++#define KHADAS_MCU_VIM4_REST_CONF_REG		0x2c /* WO - reset EEPROM */
++#define KHADAS_MCU_VIM4_LED_ON_RAM_REG		0x89 /* WO - LED volatile */
++#define KHADAS_MCU_VIM4_FAN_CTRL_REG		0x8a /* WO */
++#define KHADAS_MCU_VIM4_WDT_EN_REG		0x8b /* WO */
++#define KHADAS_MCU_VIM4_SYS_RST_REG		0x91 /* WO */
++
+ enum {
+ 	KHADAS_BOARD_VIM1 = 0x1,
+ 	KHADAS_BOARD_VIM2,
+@@ -88,4 +95,21 @@ struct khadas_mcu {
+ 	struct regmap *regmap;
+ };
+ 
++/**
++ * struct khadas_mcu_fan_pdata - fan sub-driver configuration
++ * @fan_reg: register address to write the fan level
++ * @levels: table mapping logical cooling-device states to raw fan levels
++ * @nlevels: number of entries in @levels
++ */
++struct khadas_mcu_fan_pdata {
++	unsigned int fan_reg;
++	const unsigned int *levels;
++	unsigned int nlevels;
++};
++
++enum khadas_mcu_type {
++	KHADAS_MCU_GENERIC, /* VIM1/2/3, Edge, Edge-V */
++	KHADAS_MCU_VIM4,
++};
++
+ #endif /* MFD_KHADAS_MCU_H */
+-- 
+2.55.0
+

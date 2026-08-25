@@ -1,0 +1,45 @@
+From 554b60e971c9dcd5cc983c9da93a133b45930a8c Mon Sep 17 00:00:00 2001
+From: Ronald Claveau <linux-kernel-dev@aliel.fr>
+Date: Wed, 5 Aug 2026 10:06:03 +0200
+Subject: [PATCH 04/12] mfd: khadas-mcu: Use MFD_CELL_* macros for cell
+ declarations
+
+Convert khadas_mcu_fan_cells[] and khadas_mcu_cells[] to use the
+MFD_CELL_NAME() helper macro instead of open-coding the struct
+mfd_cell initialisers. While at it, make both arrays const since
+they are never modified after initialisation.
+
+This is a pure cleanup with no functional change, done in
+preparation for a subsequent patch which will need to attach
+platform_data to the fan cell.
+
+Signed-off-by: Ronald Claveau <linux-kernel-dev@aliel.fr>
+---
+ drivers/mfd/khadas-mcu.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mfd/khadas-mcu.c b/drivers/mfd/khadas-mcu.c
+index ba981a788692..0e74efe14f36 100644
+--- a/drivers/mfd/khadas-mcu.c
++++ b/drivers/mfd/khadas-mcu.c
+@@ -75,13 +75,13 @@ static const struct regmap_config khadas_mcu_regmap_config = {
+ 	.cache_type	= REGCACHE_MAPLE,
+ };
+ 
+-static struct mfd_cell khadas_mcu_fan_cells[] = {
++static const struct mfd_cell khadas_mcu_fan_cells[] = {
+ 	/* VIM1/2 Rev13+ and VIM3 only */
+-	{ .name = "khadas-mcu-fan-ctrl", },
++	MFD_CELL_NAME("khadas-mcu-fan-ctrl"),
+ };
+ 
+-static struct mfd_cell khadas_mcu_cells[] = {
+-	{ .name = "khadas-mcu-user-mem", },
++static const struct mfd_cell khadas_mcu_cells[] = {
++	MFD_CELL_NAME("khadas-mcu-user-mem"),
+ };
+ 
+ static int khadas_mcu_probe(struct i2c_client *client)
+-- 
+2.55.0
+

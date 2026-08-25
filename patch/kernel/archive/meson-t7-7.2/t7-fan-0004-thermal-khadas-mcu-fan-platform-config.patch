@@ -1,0 +1,152 @@
+From 31aefc8536029075da62f79b9e4001eab353e5e3 Mon Sep 17 00:00:00 2001
+From: Ronald Claveau <linux-kernel-dev@aliel.fr>
+Date: Wed, 5 Aug 2026 10:06:05 +0200
+Subject: [PATCH 06/12] thermal: khadas-mcu-fan: Add fan config from platform
+ data Add regulator support
+
+Replace the hardcoded MAX_LEVEL constant and fan register
+with values read from platform_data (fan_reg, levels[] and nlevels),
+as new MCUs need different values.
+
+The cooling device's state is stored as an index into levels[],
+and khadas_mcu_fan_set_level() writes levels[state] to fan_reg,
+rather than writing the raw state value as before.
+
+Optionally acquire and enable a "fan" regulator supply
+at probe time and on resume,
+so boards that gate fan power through a regulator are handled.
+
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Signed-off-by: Ronald Claveau <linux-kernel-dev@aliel.fr>
+---
+ drivers/thermal/khadas_mcu_fan.c | 58 ++++++++++++++++++++++----------
+ 1 file changed, 41 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/thermal/khadas_mcu_fan.c b/drivers/thermal/khadas_mcu_fan.c
+index 21b3d0a71bd0..c7f74394b823 100644
+--- a/drivers/thermal/khadas_mcu_fan.c
++++ b/drivers/thermal/khadas_mcu_fan.c
+@@ -13,34 +13,30 @@
+ #include <linux/regmap.h>
+ #include <linux/sysfs.h>
+ #include <linux/thermal.h>
+-
+-#define MAX_LEVEL 3
++#include <linux/regulator/consumer.h>
+ 
+ struct khadas_mcu_fan_ctx {
+ 	struct khadas_mcu *mcu;
++	unsigned int fan_reg;
+ 	unsigned int level;
++	const unsigned int *levels;
++	unsigned int nlevels;
+ 	struct thermal_cooling_device *cdev;
++	struct regulator *power;
+ };
+ 
+ static int khadas_mcu_fan_set_level(struct khadas_mcu_fan_ctx *ctx,
+ 				    unsigned int level)
+ {
+-	int ret;
+-
+-	ret = regmap_write(ctx->mcu->regmap, KHADAS_MCU_CMD_FAN_STATUS_CTRL_REG,
+-			   level);
+-	if (ret)
+-		return ret;
+-
+-	ctx->level = level;
+-
+-	return 0;
++	return regmap_write(ctx->mcu->regmap, ctx->fan_reg, level);
+ }
+ 
+ static int khadas_mcu_fan_get_max_state(struct thermal_cooling_device *cdev,
+ 					unsigned long *state)
+ {
+-	*state = MAX_LEVEL;
++	struct khadas_mcu_fan_ctx *ctx = cdev->devdata;
++
++	*state = ctx->nlevels - 1;
+ 
+ 	return 0;
+ }
+@@ -60,14 +56,21 @@ khadas_mcu_fan_set_cur_state(struct thermal_cooling_device *cdev,
+ 			     unsigned long state)
+ {
+ 	struct khadas_mcu_fan_ctx *ctx = cdev->devdata;
++	int ret;
+ 
+-	if (state > MAX_LEVEL)
++	if (state >= ctx->nlevels)
+ 		return -EINVAL;
+ 
+ 	if (state == ctx->level)
+ 		return 0;
+ 
+-	return khadas_mcu_fan_set_level(ctx, state);
++	ret = khadas_mcu_fan_set_level(ctx, ctx->levels[state]);
++	if (ret)
++		return ret;
++
++	ctx->level = state;
++
++	return 0;
+ }
+ 
+ static const struct thermal_cooling_device_ops khadas_mcu_fan_cooling_ops = {
+@@ -78,6 +81,7 @@ static const struct thermal_cooling_device_ops khadas_mcu_fan_cooling_ops = {
+ 
+ static int khadas_mcu_fan_probe(struct platform_device *pdev)
+ {
++	const struct khadas_mcu_fan_pdata *pdata = dev_get_platdata(&pdev->dev);
+ 	struct khadas_mcu *mcu = dev_get_drvdata(pdev->dev.parent);
+ 	struct thermal_cooling_device *cdev;
+ 	struct device *dev = &pdev->dev;
+@@ -87,7 +91,22 @@ static int khadas_mcu_fan_probe(struct platform_device *pdev)
+ 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
+ 	if (!ctx)
+ 		return -ENOMEM;
++
+ 	ctx->mcu = mcu;
++	ctx->fan_reg = pdata->fan_reg;
++	ctx->levels = pdata->levels;
++	ctx->nlevels = pdata->nlevels;
++
++	ctx->power = devm_regulator_get(dev->parent, "fan");
++	if (IS_ERR(ctx->power))
++		return PTR_ERR(ctx->power);
++
++	ret = regulator_enable(ctx->power);
++	if (ret) {
++		dev_err(dev, "Failed to enable fan power supply: %d\n", ret);
++		return ret;
++	}
++
+ 	platform_set_drvdata(pdev, ctx);
+ 
+ 	cdev = devm_thermal_of_child_cooling_device_register(dev->parent,
+@@ -125,14 +144,19 @@ static int khadas_mcu_fan_suspend(struct device *dev)
+ 
+ 	ctx->level = level_save;
+ 
+-	return 0;
++	return regulator_disable(ctx->power);
+ }
+ 
+ static int khadas_mcu_fan_resume(struct device *dev)
+ {
+ 	struct khadas_mcu_fan_ctx *ctx = dev_get_drvdata(dev);
++	int ret;
++
++	ret = regulator_enable(ctx->power);
++	if (ret)
++		return ret;
+ 
+-	return khadas_mcu_fan_set_level(ctx, ctx->level);
++	return khadas_mcu_fan_set_level(ctx, ctx->levels[ctx->level]);
+ }
+ #endif
+ 
+-- 
+2.55.0
+

@@ -1,0 +1,42 @@
+From a92d8afe3f80d89fc9f1aa39e71242149f2971df Mon Sep 17 00:00:00 2001
+From: Lucas Tanure <tanure@linux.com>
+Date: Sun, 23 Aug 2026 12:53:35 +0100
+Subject: [PATCH 01/12] arm64: dts: amlogic: t7: khadas-vim4: allow the SD card
+ to be power cycled
+
+SD cards start at 3.3V and switch to 1.8V to reach UHS-I speeds. Some
+cards refuse that switch, and the SD specification says the only way
+to recover is to power the card off and start again.
+
+SD_3V3 is marked regulator-always-on, so the supply never goes off,
+the card stays stuck half way through the switch, and the MMC core
+retries forever:
+
+  mmc1: error -95 whilst initialising SD card
+
+Drop regulator-always-on. regulator-boot-on still turns the supply on
+at boot, and a card that refuses the switch now falls back to high
+speed instead of failing to initialise.
+
+Fixes: 8c45bf9ae4ef ("arm64: dts: amlogic: t7: khadas-vim4: Add power regulators")
+Signed-off-by: Lucas Tanure <tanure@linux.com>
+Assisted-by: Claude:claude-fable-5
+---
+ arch/arm64/boot/dts/amlogic/amlogic-t7-a311d2-khadas-vim4.dts | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/amlogic-t7-a311d2-khadas-vim4.dts b/arch/arm64/boot/dts/amlogic/amlogic-t7-a311d2-khadas-vim4.dts
+index c41525a34b72..ee3ac49905bc 100644
+--- a/arch/arm64/boot/dts/amlogic/amlogic-t7-a311d2-khadas-vim4.dts
++++ b/arch/arm64/boot/dts/amlogic/amlogic-t7-a311d2-khadas-vim4.dts
+@@ -71,7 +71,6 @@ sd_3v3: regulator-sdcard-3v3 {
+ 		vin-supply = <&vddao_3v3>;
+ 		gpio = <&gpio GPIOD_11 GPIO_ACTIVE_LOW>;
+ 		regulator-boot-on;
+-		regulator-always-on;
+ 	};
+ 
+ 	sdio_pwrseq: sdio-pwrseq {
+-- 
+2.55.0
+

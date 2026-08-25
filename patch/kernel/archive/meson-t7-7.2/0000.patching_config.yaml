@@ -1,0 +1,27 @@
+config:
+
+  # Just some info stuff; not used by the patching scripts
+  name: meson-t7-7.2
+  kind: kernel
+  type: mainline # or: vendor
+  branch: linux-7.2.y
+  last-known-good-tag: v7.2
+  maintainers:
+    - { github: adeepn, name: Viacheslav Bocharov, email: adeep@lexina.in, armbian-forum: adeepn }
+
+  # .dts files in these directories will be copied as-is to the build tree; later ones overwrite earlier ones.
+  dts-directories:
+    - { source: "dt", target: "arch/arm64/boot/dts/amlogic" }
+
+  # the Makefile in each of these directories will be magically patched to include the dts files copied
+  #  or patched-in; overlay subdir will be included "-y" if it exists.
+  auto-patch-dt-makefile:
+    - { directory: "arch/arm64/boot/dts/amlogic", config-var: "CONFIG_ARCH_MESON" }
+
+  # configuration for when applying patches to git / auto-rewriting patches (development cycle helpers)
+  patches-to-git:
+    do-not-commit-files:
+      - "MAINTAINERS" # constant churn, drop them. sorry.
+      - "Documentation/devicetree/bindings/arm/amlogic.yaml" # constant churn, conflicts on every bump, drop it. sorry.
+    do-not-commit-regexes: # Python-style regexes
+      - "^arch/([a-zA-Z0-9]+)/boot/dts/([a-zA-Z0-9]+)/Makefile$" # ignore DT Makefile patches, we've an auto-patcher now
