@@ -1,0 +1,124 @@
+From 493b9b27e980779a72605030c318b0f276d4f6c8 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <v@baodeep.com>
+Date: Tue, 25 Aug 2026 14:56:22 +0300
+Subject: [PATCH 2/2] firmware: meson_sm: serialize shared-memory access
+
+meson_sm_call_read() and meson_sm_call_write() pass data through single
+shared in/out buffers with no locking: a second caller can overwrite the
+shmem between another caller's SMC and its memcpy. With both the efuse
+nvmem ops and the serial/chipid sysfs attributes going through this
+path, a concurrent reader can silently receive bytes from someone
+else's response.
+
+Take a mutex around the SMC-plus-copy sequence in both helpers. All
+users run in process context (nvmem ops, sysfs show), so sleeping is
+fine; plain meson_sm_call() users do not touch the shared buffers and
+stay lock-free.
+
+Signed-off-by: Viacheslav Bocharov <adeep@lexina.in>
+---
+ drivers/firmware/meson/meson_sm.c | 48 +++++++++++++++++++++++++------
+ 1 file changed, 39 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/firmware/meson/meson_sm.c b/drivers/firmware/meson/meson_sm.c
+index 0e4ec650943e..8af2656984ea 100644
+--- a/drivers/firmware/meson/meson_sm.c
++++ b/drivers/firmware/meson/meson_sm.c
+@@ -12,6 +12,7 @@
+ #include <linux/bug.h>
+ #include <linux/io.h>
+ #include <linux/module.h>
++#include <linux/mutex.h>
+ #include <linux/of.h>
+ #include <linux/of_platform.h>
+ #include <linux/platform_device.h>
+@@ -142,6 +143,14 @@ EXPORT_SYMBOL(meson_sm_call);
+  *		When 0 is returned there is no guarantee about the amount of
+  *		data read and bsize bytes are copied in buffer.
+  */
++/*
++ * Serialize commands that go through the shared in/out buffers: without
++ * this, a second caller can overwrite the shmem between another caller's
++ * SMC and its memcpy, so that caller reads (or the firmware consumes)
++ * a response that belongs to someone else.
++ */
++static DEFINE_MUTEX(meson_sm_shmem_lock);
++
+ int meson_sm_call_read(struct meson_sm_firmware *fw, void *buffer,
+ 		       unsigned int bsize, unsigned int cmd_index, u32 arg0,
+ 		       u32 arg1, u32 arg2, u32 arg3, u32 arg4)
+@@ -158,11 +167,17 @@ int meson_sm_call_read(struct meson_sm_firmware *fw, void *buffer,
+ 	if (bsize > fw->chip->shmem_size)
+ 		return -EINVAL;
+ 
+-	if (meson_sm_call(fw, cmd_index, &size, arg0, arg1, arg2, arg3, arg4) < 0)
+-		return -EINVAL;
++	mutex_lock(&meson_sm_shmem_lock);
+ 
+-	if (size < 0 || size > bsize)
+-		return -EINVAL;
++	if (meson_sm_call(fw, cmd_index, &size, arg0, arg1, arg2, arg3, arg4) < 0) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	if (size < 0 || size > bsize) {
++		ret = -EINVAL;
++		goto out;
++	}
+ 
+ 	ret = size;
+ 
+@@ -177,6 +192,9 @@ int meson_sm_call_read(struct meson_sm_firmware *fw, void *buffer,
+ 	if (buffer)
+ 		memcpy(buffer, fw->sm_shmem_out_base, size);
+ 
++out:
++	mutex_unlock(&meson_sm_shmem_lock);
++
+ 	return ret;
+ }
+ EXPORT_SYMBOL(meson_sm_call_read);
+@@ -201,6 +219,7 @@ int meson_sm_call_write(struct meson_sm_firmware *fw, void *buffer,
+ 			u32 arg1, u32 arg2, u32 arg3, u32 arg4)
+ {
+ 	s32 written;
++	int ret;
+ 
+ 	if (!fw->chip)
+ 		return -ENOENT;
+@@ -211,15 +230,26 @@ int meson_sm_call_write(struct meson_sm_firmware *fw, void *buffer,
+ 	if (!fw->chip->cmd_shmem_in_base)
+ 		return -EINVAL;
+ 
++	mutex_lock(&meson_sm_shmem_lock);
++
+ 	memcpy(fw->sm_shmem_in_base, buffer, size);
+ 
+-	if (meson_sm_call(fw, cmd_index, &written, arg0, arg1, arg2, arg3, arg4) < 0)
+-		return -EINVAL;
++	if (meson_sm_call(fw, cmd_index, &written, arg0, arg1, arg2, arg3, arg4) < 0) {
++		ret = -EINVAL;
++		goto out;
++	}
+ 
+-	if (written <= 0 || written > size)
+-		return -EINVAL;
++	if (written <= 0 || written > size) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	ret = written;
+ 
+-	return written;
++out:
++	mutex_unlock(&meson_sm_shmem_lock);
++
++	return ret;
+ }
+ EXPORT_SYMBOL(meson_sm_call_write);
+ 
+-- 
+2.55.0
+
