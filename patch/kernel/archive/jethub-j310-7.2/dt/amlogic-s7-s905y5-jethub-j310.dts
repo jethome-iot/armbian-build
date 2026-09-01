@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2026 JetHome
+ *
+ * Bring-up device tree for the JetHub D3-mini on a mainline kernel.
+ * Upstream has the S7 platform (pinctrl, gpio-intc, power domains, socinfo)
+ * but no clock controller, so only the UART can be described for now: every
+ * other block needs a clock parent that does not exist yet.
+ */
+
+/dts-v1/;
+
+#include "amlogic-s7.dtsi"
+
+/ {
+	model = "JetHome JetHub D3-mini (j310)";
+	compatible = "jethome,jethub-j310", "amlogic,s7";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		serial0 = &uart_b;
+	};
+
+	chosen {
+		stdout-path = "serial0:921600n8";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x1 0x00000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* Same window the vendor tree and the bp201 reference board use. */
+		secmon_reserved: secmon@5000000 {
+			compatible = "shared-dma-pool";
+			reg = <0x0 0x05000000 0x0 0x02300000>;
+			no-map;
+		};
+
+		ramoops@7400000 {
+			compatible = "ramoops";
+			reg = <0x0 0x07400000 0x0 0x00080000>;
+			record-size = <0x30000>;
+			console-size = <0x40000>;
+			pmsg-size = <0x10000>;
+		};
+	};
+};
+
+&uart_b {
+	status = "okay";
+};
