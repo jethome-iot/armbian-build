@@ -32,9 +32,14 @@ fi
 setenv bootdev "${devnum}:${rootpart}"
 
 # legacy kernel values from armbianEnv.txt
-if test -e ${devtype} ${bootdev} ${prefix}armbianEnv.txt; then
-	load ${devtype} ${bootdev} ${scriptaddr} ${prefix}armbianEnv.txt
-	env import -t ${scriptaddr} ${filesize}
+# note: load into a dedicated address, NOT scriptaddr - this very script is
+# executing from scriptaddr and would be clobbered by the load
+setenv envaddr "0x13000000"
+if load ${devtype} ${bootdev} ${envaddr} ${prefix}armbianEnv.txt; then
+	env import -t ${envaddr} ${filesize}
+	echo "armbianEnv.txt imported: console=${console} verbosity=${verbosity}"
+else
+	echo "armbianEnv.txt NOT loaded from ${devtype} ${bootdev} ${prefix}armbianEnv.txt"
 fi
 
 setenv verbosity "7"
@@ -61,13 +66,13 @@ if test "$board" = "jethub_j310"; then
 fi
 
 # Set console based on board type
-if test "${console}" = "serial"; then
-    if test "$board" = "jethub_j310"; then
-        setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
-    else
-        setenv consoleargs "console=ttyAML0,115200n8"
-    fi
+if test "$board" = "jethub_j310"; then
+    setenv consoleargs "console=ttyS0,921600n8 earlycon=aml_uart,0xfe07a000"
+else
+    setenv consoleargs "console=ttyAML0,115200n8"
 fi
+if test "${console}" = "display"; then setenv consoleargs "console=tty1"; fi
+if test "${console}" = "both"; then setenv consoleargs "${consoleargs} console=tty1"; fi
 
 setenv bootargs "root=${rootdev} rootwait rootflags=data=writeback rootfstype=${rootfstype} ${consoleargs} no_console_suspend consoleblank=0 coherent_pool=16M loglevel=${verbosity} fsck.mode=force fsck.repair=yes net.ifnames=0 ${extraargs} ${extraboardargs}"
 
