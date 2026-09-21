@@ -56,15 +56,15 @@ function make_burn__run() {
 	local -r recovery_slots="$7"
 
 	local -r bins="${BINS_DIR}/${bins_subdir}"
+	[[ -d "${bins}" ]] || exit_with_error "bins directory not found: ${bins}"
 
 	# s7 (j310) packs a different file set
 	local dtsi_name image_cfg packer
+	dtsi_name="partition_arm.dtsi"
 	if [[ "${soc_family}" == "s7" ]]; then
-		dtsi_name="partition_arm_j310.dtsi"
 		image_cfg="${BINS_DIR}/image.armbian.s7.cfg"
 		packer="${TOOLS_DIR}/tools/aml_image_v2_packer_new.s7"
 	else
-		dtsi_name="partition_arm.dtsi"
 		image_cfg="${IMAGE_CFG}"
 		packer="${PACKER}"
 	fi
@@ -117,7 +117,7 @@ function make_burn__run() {
 	if [[ "${recovery_slots}" == "yes" ]]; then
 		local recovery_fit fit_bytes
 		local -r slot_bytes=$((102 * 1024 * 1024))
-		recovery_fit="$(ensure_recovery_fit "${bins_subdir}")" || exit_with_error "Could not obtain recovery.fit for ${board}"
+		recovery_fit="$(ensure_recovery_fit "${board#jethub}")" || exit_with_error "Could not obtain recovery.fit for ${board}"
 		fit_bytes=$(stat -c%s "${recovery_fit}")
 		[[ ${fit_bytes} -le ${slot_bytes} ]] || exit_with_error "recovery.fit is ${fit_bytes} bytes, does not fit the ${slot_bytes} byte slot"
 
@@ -158,16 +158,18 @@ function post_build_image__900_jethub_burn() {
 	local -r original_image_file="${DESTIMG}/${version}.img"
 	[[ -f "$original_image_file" ]] || exit_with_error "Original image not found: $original_image_file"
 
-	local dts_name
+	local dts_name bins_subdir
 	local soc_family="legacy" recovery_slots="no"
 	case "${BOARD}" in
-		jethubj80) dts_name="meson-gxl-s905w-jethome-jethub-j80.dts" ;;
-		jethubj100) dts_name="meson-axg-jethome-jethub-j100.dts" recovery_slots="yes" ;;
-		jethubj200) dts_name="meson-sm1-jethome-jethub-j200.dts" ;;
-		jethubj310) dts_name="meson-s7-jethub-j310.dts" soc_family="s7" recovery_slots="yes" ;;
+		jethubj80) dts_name="meson-gxl-s905w-jethome-jethub-j80.dts" bins_subdir="j80" ;;
+		jethubj100) dts_name="meson-axg-jethome-jethub-j100.dts" bins_subdir="j100" recovery_slots="yes" ;;
+		jethubj200) dts_name="meson-sm1-jethome-jethub-j200.dts" bins_subdir="j200" ;;
+		jethubj310)
+			dts_name="meson-s7-jethub-j310.dts" bins_subdir="j310-armbian"
+			soc_family="s7" recovery_slots="yes"
+			;;
 		*) exit_with_error "Unsupported board: ${BOARD} (supported: j80, j100, j200, j310)" ;;
 	esac
-	local -r bins_subdir="${BOARD#jethub}" # jethubj80 → j80
 
 	display_alert "Converting image to Amlogic burn format" "jethub-burn :: ${BOARD}" "info"
 
