@@ -27,8 +27,8 @@ ENV{JETHUB_UXM_SLOT}=="", GOTO="jethub_uxm_end"
 
 # Module type from the product string
 ATTRS{product}=="JetHome Zigbee*", ENV{JETHUB_MODULE}="ttyZigbee"
+ATTRS{product}=="JetHome RS-485*", ENV{JETHUB_MODULE}="ttyRS485"
 
-ENV{JETHUB_MODULE}=="", SYMLINK+="jethub/slot$env{JETHUB_UXM_SLOT}/port"
 ENV{JETHUB_MODULE}!="", SYMLINK+="jethub/slot$env{JETHUB_UXM_SLOT}/$env{JETHUB_MODULE}"
 
 LABEL="jethub_uxm_end"
