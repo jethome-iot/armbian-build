@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (c) 2026 JetHome
+ *
+ * JetHub D3 (J310): Amlogic S905Y5 (S7), 2-4 GiB RAM, eMMC, SD, 100 Mbit
+ * Ethernet, USB 2.0, four UXM module slots.
+ *
+ * Bring-up stage: only the blocks that the mainline S7 dtsi already
+ * provides. MMC, Ethernet, I2C and USB wait for an S7 clock controller.
+ */
+
+/dts-v1/;
+
+#include "amlogic-s7.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	model = "JetHome JetHub D3";
+	compatible = "jethome,jethub-j310", "amlogic,s7";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		serial0 = &uart_b;
+	};
+
+	chosen {
+		stdout-path = "serial0:921600n8";
+	};
+
+	/* U-Boot fixes up the real size (2 or 4 GiB) */
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x80000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/*
+		 * 35 MiB reserved for ARM Trusted Firmware. The vendor U-Boot
+		 * runs "rsvmem check" before booti: it needs this exact node
+		 * name and rewrites reg to the BL31/BL32 region it booted with.
+		 */
+		secmon_reserved: linux,secmon {
+			compatible = "shared-dma-pool";
+			reg = <0x0 0x05000000 0x0 0x2300000>;
+			alignment = <0x0 0x100000>;
+			no-map;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led-red {
+			label = "jethub:red:fault";
+			gpios = <&gpioz 6 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led-blue {
+			label = "jethub:blue:recovery";
+			gpios = <&gpioz 5 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led-green {
+			label = "jethub:green:heartbeat";
+			gpios = <&gpioz 4 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
+};
+
+&uart_b {
+	status = "okay";
+};
