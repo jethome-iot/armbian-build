@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chuan Liu <chuan.liu@amlogic.com>
+Date: Sun, 20 Sep 2026 18:25:05 +0800
+Subject: [PATCH 07/20] soc: amlogic: clk-measure: Support more measurement
+ channels
+
+On S4 and C3, as well as later SoCs, the clk-measure IP expands the
+number of supported measurement channels from 128 to 256. Accordingly,
+the MSR_CLK_SRC field in the register is extended from 7 bits to 8 bits.
+
+To support both the old and new implementations, the driver now
+uniformly defines the valid MSR_CLK_SRC field as bits[27:20].
+
+For SoCs where MSR_CLK_SRC is only 7 bits wide, the driver never sets
+bit27, and on those SoCs bit27 is read-only. Therefore, using
+bits[27:20] as the unified field definition does not introduce any
+behavioral change or compatibility issue for existing SoCs.
+
+Signed-off-by: Chuan Liu <chuan.liu@amlogic.com>
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Link: https://lore.kernel.org/r/20260920-more-socs-to-support-clk_measure-v2-3-224382a429e8@amlogic.com
+---
+ drivers/soc/amlogic/meson-clk-measure.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/soc/amlogic/meson-clk-measure.c b/drivers/soc/amlogic/meson-clk-measure.c
+index 8a1a9fed0..0d4ba2555 100644
+--- a/drivers/soc/amlogic/meson-clk-measure.c
++++ b/drivers/soc/amlogic/meson-clk-measure.c
+@@ -20,7 +20,7 @@ static DEFINE_MUTEX(measure_lock);
+ #define MSR_CONT		BIT(17) /* continuous measurement */
+ #define MSR_INTR		BIT(18) /* interrupts */
+ #define MSR_RUN			BIT(19)
+-#define MSR_CLK_SRC		GENMASK(26, 20)
++#define MSR_CLK_SRC		GENMASK(27, 20)
+ #define MSR_BUSY		BIT(31)
+ 
+ #define MSR_VAL_MASK		GENMASK(15, 0)

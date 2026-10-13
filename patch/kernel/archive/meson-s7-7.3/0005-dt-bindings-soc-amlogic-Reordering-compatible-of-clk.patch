@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chuan Liu <chuan.liu@amlogic.com>
+Date: Sun, 20 Sep 2026 18:25:03 +0800
+Subject: [PATCH 05/20] dt-bindings: soc: amlogic: Reordering compatible of
+ clk-measure
+
+Sort the compatible properties defined by clk-measure in alphabetical
+order.
+
+Signed-off-by: Chuan Liu <chuan.liu@amlogic.com>
+Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Link: https://lore.kernel.org/r/20260920-more-socs-to-support-clk_measure-v2-1-224382a429e8@amlogic.com
+---
+ .../soc/amlogic/amlogic,meson-gx-clk-measure.yaml      | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml b/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
+index b1200e694..ad37eca48 100644
+--- a/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
++++ b/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
+@@ -16,15 +16,15 @@ maintainers:
+ properties:
+   compatible:
+     enum:
+-      - amlogic,meson-gx-clk-measure
+-      - amlogic,meson8-clk-measure
+-      - amlogic,meson8b-clk-measure
++      - amlogic,a1-clk-measure
++      - amlogic,c3-clk-measure
+       - amlogic,meson-axg-clk-measure
+       - amlogic,meson-g12a-clk-measure
++      - amlogic,meson-gx-clk-measure
+       - amlogic,meson-sm1-clk-measure
+-      - amlogic,c3-clk-measure
++      - amlogic,meson8-clk-measure
++      - amlogic,meson8b-clk-measure
+       - amlogic,s4-clk-measure
+-      - amlogic,a1-clk-measure
+       - amlogic,t7-clk-measure
+ 
+   reg:

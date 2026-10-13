@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Junyi Zhao <junyi.zhao@amlogic.com>
+Date: Thu, 27 Aug 2026 08:40:10 +0000
+Subject: [PATCH 17/20] dt-bindings: pwm: amlogic: Add new bindings for S6 S7
+ S7D
+
+Amlogic S7/S7D/S6 different from the previous SoCs, a controller
+includes one pwm, at the same time, the controller has only one
+input clock source.
+
+Signed-off-by: Junyi Zhao <junyi.zhao@amlogic.com>
+Reviewed-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Martin Blumenstingl <martin.blumenstingl@googlemail.com>
+Reviewed-by: Alexandre Mergnat <amergnat@baylibre.com>
+Signed-off-by: Xianwei Zhao <xianwei.zhao@amlogic.com>
+Link: https://lore.kernel.org/r/20260827-s6-s7-pwm-v4-1-d28a2015177d@amlogic.com
+---
+ .../devicetree/bindings/pwm/pwm-amlogic.yaml  | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/pwm/pwm-amlogic.yaml b/Documentation/devicetree/bindings/pwm/pwm-amlogic.yaml
+index c337d85da..93fa97f40 100644
+--- a/Documentation/devicetree/bindings/pwm/pwm-amlogic.yaml
++++ b/Documentation/devicetree/bindings/pwm/pwm-amlogic.yaml
+@@ -37,6 +37,7 @@ properties:
+       - enum:
+           - amlogic,meson8-pwm-v2
+           - amlogic,meson-s4-pwm
++          - amlogic,s7-pwm
+       - items:
+           - enum:
+               - amlogic,a4-pwm
+@@ -45,6 +46,11 @@ properties:
+               - amlogic,t7-pwm
+               - amlogic,meson-a1-pwm
+           - const: amlogic,meson-s4-pwm
++      - items:
++          - enum:
++              - amlogic,s6-pwm
++              - amlogic,s7d-pwm
++          - const: amlogic,s7-pwm
+       - items:
+           - enum:
+               - amlogic,meson8b-pwm-v2
+@@ -146,6 +152,19 @@ allOf:
+         clock-names: false
+       required:
+         - clocks
++  - if:
++      properties:
++        compatible:
++          contains:
++            enum:
++              - amlogic,s7-pwm
++    then:
++      properties:
++        clocks:
++          maxItems: 1
++        clock-names: false
++      required:
++        - clocks
+ 
+   - if:
+       properties:

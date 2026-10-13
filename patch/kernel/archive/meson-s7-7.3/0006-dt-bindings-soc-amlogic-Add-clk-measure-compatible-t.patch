@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chuan Liu <chuan.liu@amlogic.com>
+Date: Sun, 20 Sep 2026 18:25:04 +0800
+Subject: [PATCH 06/20] dt-bindings: soc: amlogic: Add clk-measure compatible
+ to support more SoCs
+
+Add clk-measure compatible for amlogic A5, A4, S7, S7D, S6 and A9 SoCs.
+
+Although the clk-measure IP itself has little hardware difference across
+SoCs, the clock inputs connected to the clk-measure block vary between
+SoCs. Therefore, it is difficult to fall back to the configuration used
+by previous SoCs.
+
+Signed-off-by: Chuan Liu <chuan.liu@amlogic.com>
+Acked-by: Krzysztof Kozlowski <krzysztof.kozlowski@oss.qualcomm.com>
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+Link: https://lore.kernel.org/r/20260920-more-socs-to-support-clk_measure-v2-2-224382a429e8@amlogic.com
+---
+ .../bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml  | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml b/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
+index ad37eca48..16893f427 100644
+--- a/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
++++ b/Documentation/devicetree/bindings/soc/amlogic/amlogic,meson-gx-clk-measure.yaml
+@@ -17,6 +17,9 @@ properties:
+   compatible:
+     enum:
+       - amlogic,a1-clk-measure
++      - amlogic,a4-clk-measure
++      - amlogic,a5-clk-measure
++      - amlogic,a9-clk-measure
+       - amlogic,c3-clk-measure
+       - amlogic,meson-axg-clk-measure
+       - amlogic,meson-g12a-clk-measure
+@@ -25,6 +28,9 @@ properties:
+       - amlogic,meson8-clk-measure
+       - amlogic,meson8b-clk-measure
+       - amlogic,s4-clk-measure
++      - amlogic,s6-clk-measure
++      - amlogic,s7-clk-measure
++      - amlogic,s7d-clk-measure
+       - amlogic,t7-clk-measure
+ 
+   reg:
