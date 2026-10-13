@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xianwei Zhao <xianwei.zhao@amlogic.com>
+Date: Thu, 27 Aug 2026 08:40:13 +0000
+Subject: [PATCH 20/20] pwm: meson: Add support for Amlogic S7
+
+Add support for Amlogic S7 PWM. Amlogic S7 different from the previous
+SoCs, a controller includes one pwm, at the same time,the controller has
+only one input clock source.
+
+Also use the kernel coding style for the empty of_device_id terminator.
+
+Signed-off-by: Xianwei Zhao <xianwei.zhao@amlogic.com>
+Reviewed-by: Alexandre Mergnat <amergnat@baylibre.com>
+Link: https://lore.kernel.org/r/20260827-s6-s7-pwm-v4-4-d28a2015177d@amlogic.com
+---
+ drivers/pwm/pwm-meson.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/pwm/pwm-meson.c b/drivers/pwm/pwm-meson.c
+index 24e712677..8105de737 100644
+--- a/drivers/pwm/pwm-meson.c
++++ b/drivers/pwm/pwm-meson.c
+@@ -595,6 +595,13 @@ static const struct meson_pwm_data pwm_s4_data = {
+ 	.npwm = 2,
+ };
+ 
++static const struct meson_pwm_data pwm_s7_data = {
++	.channels_init = meson_pwm_init_channels_per_channel_clk,
++	.has_constant = true,
++	.has_polarity = true,
++	.npwm = 1,
++};
++
+ static const struct of_device_id meson_pwm_matches[] = {
+ 	{
+ 		.compatible = "amlogic,meson8-pwm-v2",
+@@ -644,6 +651,10 @@ static const struct of_device_id meson_pwm_matches[] = {
+ 		.compatible = "amlogic,meson-s4-pwm",
+ 		.data = &pwm_s4_data
+ 	},
++	{
++		.compatible = "amlogic,s7-pwm",
++		.data = &pwm_s7_data
++	},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(of, meson_pwm_matches);
