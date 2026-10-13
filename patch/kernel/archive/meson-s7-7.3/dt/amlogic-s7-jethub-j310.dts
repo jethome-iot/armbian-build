@@ -5,14 +5,19 @@
  * JetHub D3 (J310): Amlogic S905Y5 (S7), 2-4 GiB RAM, eMMC, SD, 100 Mbit
  * Ethernet, USB 2.0, four UXM module slots.
  *
- * Bring-up stage: only the blocks that the mainline S7 dtsi already
- * provides. MMC, Ethernet, I2C and USB wait for an S7 clock controller.
+ * Bring-up stage. Mainline has no S7 clock controller yet, so the
+ * peripherals run on fixed-clock placeholders: U-Boot leaves the gates
+ * open and the PLLs running. The rates below are the vendor nominal
+ * values. Verify them with the clock measurer before trusting them.
  */
 
 /dts-v1/;
 
 #include "amlogic-s7.dtsi"
+#include "amlogic-s7-reset.h"
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/pinctrl/amlogic,pinctrl.h>
 
 / {
 	model = "JetHome JetHub D3";
@@ -23,6 +28,13 @@
 
 	aliases {
 		serial0 = &uart_b;
+		mmc0 = &emmc;
+		mmc1 = &sd;
+		i2c2 = &i2c2;
+		i2c3 = &i2c3;
+		i2c4 = &i2c4;
+		/* U-Boot fills local-mac-address from the eFuse MAC */
+		ethernet0 = &ethmac;
 	};
 
 	chosen {
@@ -53,6 +65,122 @@
 		};
 	};
 
+	/* Clock placeholders, see the header comment */
+	clk_sys_pclk: clock-sys-pclk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <166666667>;
+		clock-output-names = "sys_pclk";
+	};
+
+	clk_fclk_div2: clock-fclk-div2 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <1000000000>;
+		clock-output-names = "fclk_div2";
+	};
+
+	clk_fclk_50m: clock-fclk-50m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <50000000>;
+		clock-output-names = "fclk_50m";
+	};
+
+	/* vendor src_clk_rate for the MMC clock input */
+	clk_gp0_pll: clock-gp0-pll {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <1152000000>;
+		clock-output-names = "gp0_pll";
+	};
+
+	vddao_3v3: regulator-vddao-3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "VDDAO_3V3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	vddio_boot: regulator-vddio-boot {
+		compatible = "regulator-fixed";
+		regulator-name = "VDDIO_BOOT";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	/* GPIOH_6 drives PR1: high selects 3.3 V, low selects 1.8 V */
+	vqmmc_sd: regulator-vqmmc-sd {
+		compatible = "regulator-gpio";
+		regulator-name = "VQMMC_SD";
+		vin-supply = <&vddao_3v3>;
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+		gpios = <&gpioh 6 GPIO_ACTIVE_HIGH>;
+		gpios-states = <1>;
+		states = <3300000 1>, <1800000 0>;
+		regulator-settling-time-us = <10000>;
+		regulator-boot-on;
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys-polled";
+		poll-interval = <100>;
+
+		button-up {
+			label = "Joystick Up";
+			gpios = <&exp24 8 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_UP>;
+			debounce-interval = <10>;
+		};
+
+		button-down {
+			label = "Joystick Down";
+			gpios = <&exp24 9 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_DOWN>;
+			debounce-interval = <10>;
+		};
+
+		button-left {
+			label = "Joystick Left";
+			gpios = <&exp24 10 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_LEFT>;
+			debounce-interval = <10>;
+		};
+
+		button-right {
+			label = "Joystick Right";
+			gpios = <&exp24 11 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_RIGHT>;
+			debounce-interval = <10>;
+		};
+
+		button-center {
+			label = "Joystick Center";
+			gpios = <&exp24 12 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_ENTER>;
+			debounce-interval = <10>;
+		};
+
+		button-home {
+			label = "Joystick Home";
+			gpios = <&exp24 13 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_HOME>;
+			debounce-interval = <10>;
+		};
+
+		button-back {
+			label = "Joystick Back";
+			gpios = <&exp24 14 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_BACK>;
+			debounce-interval = <10>;
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -74,6 +202,328 @@
 			linux,default-trigger = "heartbeat";
 		};
 	};
+};
+
+/* Pin groups: pins and functions from the vendor pinctrl-meson-s7 tables */
+&periphs_pinctrl {
+	func-emmc {
+		emmc_pins: group-emmc-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_B, 0, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 1, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 2, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 3, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 4, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 5, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 6, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 7, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 8, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_B, 10, 1)>;
+			bias-pull-up;
+			drive-strength-microamp = <3000>;
+		};
+
+		emmc_ds_pins: group-emmc-ds-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_B, 11, 1)>;
+			bias-pull-down;
+			drive-strength-microamp = <3000>;
+		};
+
+		emmc_clk_gate_pins: group-emmc-clk-gate-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_B, 8, 0)>;
+			bias-pull-down;
+			drive-strength-microamp = <3000>;
+		};
+	};
+
+	func-sdcard {
+		sdcard_pins: group-sdcard-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_C, 0, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_C, 1, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_C, 2, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_C, 3, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_C, 4, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_C, 5, 1)>;
+			bias-pull-up;
+			drive-strength-microamp = <3000>;
+		};
+
+		sdcard_clk_gate_pins: group-sdcard-clk-gate-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_C, 4, 0)>;
+			bias-pull-down;
+			drive-strength-microamp = <3000>;
+		};
+	};
+
+	func-i2c2 {
+		i2c2_pins: group-i2c2-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_H, 8, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_H, 9, 1)>;
+			drive-strength-microamp = <3000>;
+		};
+	};
+
+	func-i2c3 {
+		i2c3_pins: group-i2c3-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_Z, 8, 2)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_Z, 9, 2)>;
+			drive-strength-microamp = <3000>;
+		};
+	};
+
+	func-i2c4 {
+		i2c4_pins: group-i2c4-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_D, 2, 2)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_D, 3, 2)>;
+			drive-strength-microamp = <3000>;
+		};
+	};
+
+	func-eth {
+		eth_led_pins: group-eth-led-pins {
+			pinmux = <AML_PINMUX(AMLOGIC_GPIO_H, 10, 1)>,
+				 <AML_PINMUX(AMLOGIC_GPIO_H, 11, 1)>;
+		};
+	};
+};
+
+/*
+ * SoC blocks that the mainline S7 dtsi does not describe yet. Registers
+ * and interrupts come from the vendor meson-s7.dtsi, the node layout from
+ * the mainline meson-s4.dtsi.
+ */
+&apb {
+	i2c2: i2c@66800 {
+		compatible = "amlogic,meson-axg-i2c";
+		reg = <0x0 0x66800 0x0 0x20>;
+		interrupts = <GIC_SPI 162 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clk_sys_pclk>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
+	i2c3: i2c@66c00 {
+		compatible = "amlogic,meson-axg-i2c";
+		reg = <0x0 0x66c00 0x0 0x20>;
+		interrupts = <GIC_SPI 163 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clk_sys_pclk>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
+	i2c4: i2c@67000 {
+		compatible = "amlogic,meson-axg-i2c";
+		reg = <0x0 0x67000 0x0 0x20>;
+		interrupts = <GIC_SPI 164 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clk_sys_pclk>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+	};
+
+	sd: mmc@8a000 {
+		compatible = "amlogic,meson-axg-mmc";
+		reg = <0x0 0x8a000 0x0 0x800>;
+		interrupts = <GIC_SPI 177 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_gp0_pll>;
+		clock-names = "core", "clkin0", "clkin1";
+		resets = <&reset RESET_SD_EMMC_B>;
+		power-domains = <&pwrc PWRC_S7_SD_EMMC_B_ID>;
+		status = "disabled";
+	};
+
+	emmc: mmc@8c000 {
+		compatible = "amlogic,meson-axg-mmc";
+		reg = <0x0 0x8c000 0x0 0x800>;
+		interrupts = <GIC_SPI 178 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_gp0_pll>;
+		clock-names = "core", "clkin0", "clkin1";
+		resets = <&reset RESET_SD_EMMC_C>;
+		power-domains = <&pwrc PWRC_S7_SD_EMMC_C_ID>;
+		no-sdio;
+		no-sd;
+		status = "disabled";
+	};
+
+	eth_phy: mdio-multiplexer@360000 {
+		compatible = "amlogic,g12a-mdio-mux";
+		reg = <0x0 0x360000 0x0 0xa4>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_fclk_50m>;
+		clock-names = "pclk", "clkin0", "clkin1";
+		mdio-parent-bus = <&mdio0>;
+
+		ext_mdio: mdio@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		int_mdio: mdio@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			internal_ephy: ethernet-phy@8 {
+				compatible = "ethernet-phy-id0180.3301",
+					     "ethernet-phy-ieee802.3-c22";
+				interrupts = <GIC_SPI 75 IRQ_TYPE_LEVEL_HIGH>;
+				reg = <8>;
+				max-speed = <100>;
+			};
+		};
+	};
+
+	ethmac: ethernet@368000 {
+		compatible = "amlogic,meson-axg-dwmac",
+			     "snps,dwmac-4.00",
+			     "snps,dwmac";
+		reg = <0x0 0x368000 0x0 0x10000>,
+		      <0x0 0x364000 0x0 0x8>;
+		interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-names = "macirq";
+		power-domains = <&pwrc PWRC_S7_ETH_ID>;
+		clocks = <&clk_sys_pclk>, <&clk_fclk_div2>, <&clk_fclk_50m>;
+		clock-names = "stmmaceth", "clkin0", "clkin1";
+		rx-fifo-depth = <4096>;
+		tx-fifo-depth = <2048>;
+		status = "disabled";
+
+		mdio0: mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,dwmac-mdio";
+		};
+	};
+};
+
+&emmc {
+	status = "okay";
+	pinctrl-0 = <&emmc_pins>, <&emmc_ds_pins>;
+	pinctrl-1 = <&emmc_clk_gate_pins>;
+	pinctrl-names = "default", "clk-gate";
+
+	bus-width = <8>;
+	cap-mmc-highspeed;
+	/* placeholder clock rates: stay in high-speed mode for now */
+	max-frequency = <50000000>;
+	non-removable;
+	disable-wp;
+
+	vmmc-supply = <&vddao_3v3>;
+	vqmmc-supply = <&vddio_boot>;
+};
+
+&sd {
+	status = "okay";
+	pinctrl-0 = <&sdcard_pins>;
+	pinctrl-1 = <&sdcard_clk_gate_pins>;
+	pinctrl-names = "default", "clk-gate";
+
+	bus-width = <4>;
+	cap-sd-highspeed;
+	max-frequency = <50000000>;
+	disable-wp;
+	cd-gpios = <&gpioc 6 GPIO_ACTIVE_HIGH>;
+
+	vmmc-supply = <&vddao_3v3>;
+	vqmmc-supply = <&vqmmc_sd>;
+};
+
+/* Base board: EEPROM, UXM slot control, 1-Wire master */
+&i2c2 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_pins>;
+	pinctrl-names = "default";
+	clock-frequency = <100000>;
+
+	eeprom_base: eeprom@56 {
+		compatible = "atmel,24c64";
+		reg = <0x56>;
+		pagesize = <32>;
+		label = "eeprom_base";
+		vcc-supply = <&vddao_3v3>;
+	};
+
+	exp21: gpio@21 {
+		compatible = "ti,tca6408";
+		reg = <0x21>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		gpio-line-names = "UXM1_RESET", "UXM1_MODE",
+				  "UXM2_RESET", "UXM2_MODE",
+				  "UXM3_RESET", "UXM3_MODE",
+				  "UXM4_RESET", "UXM4_MODE";
+	};
+
+	onewire: ds2482@18 {
+		compatible = "maxim,ds2482";
+		reg = <0x18>;
+	};
+};
+
+/* CPU carrier board: RTC, crypto, EEPROM, temperature, OLED, joystick */
+&i2c3 {
+	status = "okay";
+	pinctrl-0 = <&i2c3_pins>;
+	pinctrl-names = "default";
+	clock-frequency = <100000>;
+
+	rtc: rtc@51 {
+		compatible = "nxp,pcf8563";
+		reg = <0x51>;
+		wakeup-source;
+	};
+
+	atecc608a: crypto@60 {
+		compatible = "atmel,atecc508a";
+		reg = <0x60>;
+	};
+
+	eeprom_carrier: eeprom@54 {
+		compatible = "atmel,24c64";
+		reg = <0x54>;
+		pagesize = <32>;
+		label = "eeprom_carrier";
+		vcc-supply = <&vddao_3v3>;
+	};
+
+	temp: temperature-sensor@48 {
+		compatible = "ti,tmp102";
+		reg = <0x48>;
+	};
+
+	exp24: gpio@24 {
+		compatible = "nxp,pca9535";
+		reg = <0x24>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		gpio-line-names = "", "", "", "", "", "", "", "",
+				  "JOY_UP", "JOY_DOWN", "JOY_LEFT", "JOY_RIGHT",
+				  "JOY_CENTER", "JOY_HOME", "JOY_BACK", "";
+	};
+};
+
+/* UXM module slots */
+&i2c4 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_pins>;
+	pinctrl-names = "default";
+	clock-frequency = <100000>;
+};
+
+/*
+ * Ethernet stays off until the clock gates are verified: a register
+ * access through a closed gate hangs the bus. Enable it from U-Boot with
+ * a /boot/fixup.scr ("fdt set /soc/bus@fe000000/ethernet@368000 status okay").
+ */
+&ethmac {
+	pinctrl-0 = <&eth_led_pins>;
+	pinctrl-names = "default";
+	phy-handle = <&internal_ephy>;
+	phy-mode = "rmii";
 };
 
 &uart_b {
