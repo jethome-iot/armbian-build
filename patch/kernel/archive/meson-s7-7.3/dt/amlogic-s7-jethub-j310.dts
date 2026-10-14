@@ -462,7 +462,7 @@
 	};
 
 	eth_phy: mdio-multiplexer@360000 {
-		compatible = "amlogic,g12a-mdio-mux";
+		compatible = "amlogic,s7-mdio-mux";
 		reg = <0x0 0x360000 0x0 0xa4>;
 		#address-cells = <1>;
 		#size-cells = <0>;
