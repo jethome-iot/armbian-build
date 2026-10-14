@@ -26,6 +26,15 @@ esac
 
 # S7 platform drivers that are modules or absent in the meson64 config.
 # The config file starts as a copy of linux-meson64-edge.config.
+# The S7 firmware exposes the 24 MHz PLL references through SCMI and the
+# board dies when Linux gates the unused ones at boot. Keep them running
+# until the PLL, USB and PHY drivers describe their consumers.
+function pre_install_kernel_debs__meson_s7_keep_unused_clocks() {
+	display_alert "$BOARD" "Add extra boot arguments" "info"
+	run_host_command_logged echo "extraargs=clk_ignore_unused" >> "${SDCARD}"/boot/armbianEnv.txt
+	return 0
+}
+
 function custom_kernel_config__meson_s7_soc_drivers() {
 	display_alert "Enabling Amlogic S7/S7D SoC drivers" "${LINUXFAMILY}-${BRANCH}" "info"
 	opts_y+=(
