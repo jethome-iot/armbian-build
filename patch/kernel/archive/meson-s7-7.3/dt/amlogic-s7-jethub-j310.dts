@@ -5,12 +5,9 @@
  * JetHub D3 (J310): Amlogic S905Y5 (S7), 2-4 GiB RAM, eMMC, SD, 100 Mbit
  * Ethernet, USB 2.0, four UXM module slots.
  *
- * Bring-up stage. The peripherals clock controller is in place; the PLL
- * controller is not, so the fixed PLL outputs and the GP0/HiFi PLLs are
- * fixed-clock placeholders: U-Boot leaves them running. The clock
- * measurer confirmed the rates on the board (2026-10-14): fclk_div5
- * 400 MHz (so fixed_pll 2 GHz), fclk_50m 50 MHz, gp0_pll 1151.7 MHz,
- * hifi_pll 491.5 MHz; BL2 prints the same PLL rates.
+ * Bring-up stage. The peripherals and PLL clock controllers are in
+ * place. The PLL reference oscillator, the CPU clock and the GP1 PLL
+ * come from the firmware through SCMI.
  */
 
 /dts-v1/;
@@ -18,6 +15,8 @@
 #include "amlogic-s7.dtsi"
 #include "amlogic-s7-reset.h"
 #include <dt-bindings/clock/amlogic,s7-peripherals-clkc.h>
+#include <dt-bindings/clock/amlogic,s7-pll-clkc.h>
+#include <dt-bindings/clock/amlogic,s7-scmi-clkc.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/amlogic,pinctrl.h>
@@ -66,79 +65,6 @@
 			alignment = <0x0 0x100000>;
 			no-map;
 		};
-	};
-
-	/* PLL placeholders, see the header comment; rates measured */
-	clk_fclk_div2: clock-fclk-div2 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <1000000000>;
-		clock-output-names = "fclk_div2";
-	};
-
-	clk_fclk_div2p5: clock-fclk-div2p5 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <800000000>;
-		clock-output-names = "fclk_div2p5";
-	};
-
-	clk_fclk_div3: clock-fclk-div3 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <666666667>;
-		clock-output-names = "fclk_div3";
-	};
-
-	clk_fclk_div4: clock-fclk-div4 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <500000000>;
-		clock-output-names = "fclk_div4";
-	};
-
-	clk_fclk_div5: clock-fclk-div5 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <400000000>;
-		clock-output-names = "fclk_div5";
-	};
-
-	clk_fclk_div7: clock-fclk-div7 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <285714286>;
-		clock-output-names = "fclk_div7";
-	};
-
-	clk_fclk_50m: clock-fclk-50m {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <50000000>;
-		clock-output-names = "fclk_50m";
-	};
-
-	/* MMC clock source (vendor src_clk_rate), measured 1151.7 MHz */
-	clk_gp0_pll: clock-gp0-pll {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <1152000000>;
-		clock-output-names = "gp0_pll";
-	};
-
-	clk_hifi_pll: clock-hifi-pll {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <491520000>;
-		clock-output-names = "hifi_pll";
-	};
-
-	/* off on this board, nothing selects it */
-	clk_hifi1_pll: clock-hifi1-pll {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <491520000>;
-		clock-output-names = "hifi1_pll";
 	};
 
 	/*
@@ -380,16 +306,16 @@
 		reg = <0x0 0x0 0x0 0x49c>;
 		#clock-cells = <1>;
 		clocks = <&xtal>,
-			 <&clk_fclk_div2>,
-			 <&clk_fclk_div2p5>,
-			 <&clk_fclk_div3>,
-			 <&clk_fclk_div4>,
-			 <&clk_fclk_div5>,
-			 <&clk_fclk_div7>,
-			 <&clk_hifi_pll>,
-			 <&clk_hifi1_pll>,
-			 <&clk_gp0_pll>,
-			 <&scmi_clk 11>; /* gp1_pll */
+			 <&clkc_pll CLKID_FCLK_DIV2>,
+			 <&clkc_pll CLKID_FCLK_DIV2P5>,
+			 <&clkc_pll CLKID_FCLK_DIV3>,
+			 <&clkc_pll CLKID_FCLK_DIV4>,
+			 <&clkc_pll CLKID_FCLK_DIV5>,
+			 <&clkc_pll CLKID_FCLK_DIV7>,
+			 <&clkc_pll CLKID_HIFI_PLL>,
+			 <&clkc_pll CLKID_HIFI1_PLL>,
+			 <&clkc_pll CLKID_GP0_PLL>,
+			 <&scmi_clk CLKID_GP1_PLL>;
 		clock-names = "xtal",
 			      "fdiv2",
 			      "fdiv2p5",
@@ -401,6 +327,14 @@
 			      "hifi1",
 			      "gp0",
 			      "gp1";
+	};
+
+	clkc_pll: clock-controller@8000 {
+		compatible = "amlogic,s7-pll-clkc";
+		reg = <0x0 0x8000 0x0 0x1e8>;
+		#clock-cells = <1>;
+		clocks = <&scmi_clk CLKID_TOP_PLL_OSC>;
+		clock-names = "top";
 	};
 
 	i2c2: i2c@66800 {
@@ -468,7 +402,7 @@
 		#size-cells = <0>;
 		clocks = <&clkc_periphs CLKID_SYS_ETHPHY>,
 			 <&xtal>,
-			 <&clk_fclk_50m>;
+			 <&clkc_pll CLKID_FCLK_50M>;
 		clock-names = "pclk", "clkin0", "clkin1";
 		mdio-parent-bus = <&mdio0>;
 
@@ -503,8 +437,8 @@
 		interrupt-names = "macirq";
 		power-domains = <&pwrc PWRC_S7_ETH_ID>;
 		clocks = <&clkc_periphs CLKID_SYS_ETH>,
-			 <&clk_fclk_div2>,
-			 <&clk_fclk_50m>;
+			 <&clkc_pll CLKID_FCLK_DIV2>,
+			 <&clkc_pll CLKID_FCLK_50M>;
 		clock-names = "stmmaceth", "clkin0", "clkin1";
 		rx-fifo-depth = <4096>;
 		tx-fifo-depth = <2048>;

@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <v@baodeep.com>
 Date: Wed, 14 Oct 2026 14:08:27 +0300
-Subject: [PATCH 502/503] dt-bindings: net: amlogic,g12a-mdio-mux: add S7
+Subject: [PATCH 505/506] dt-bindings: net: amlogic,g12a-mdio-mux: add S7
  compatible
 
 The Amlogic S7 embeds the G12A MDIO multiplexer with a different PLL

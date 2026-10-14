@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <v@baodeep.com>
 Date: Wed, 14 Oct 2026 11:31:39 +0300
-Subject: [PATCH 500/501] dt-bindings: clock: add Amlogic S7 peripherals clock
+Subject: [PATCH 503/506] dt-bindings: clock: add Amlogic S7 peripherals clock
  controller
 
 Add DT bindings for the peripherals clock controller of the Amlogic S7
@@ -13,18 +13,18 @@ GP1 belongs to the firmware.
 
 Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
 ---
- .../clock/amlogic,s7-peripherals-clkc.yaml    |  98 ++++++++++
+ .../clock/amlogic,s7-peripherals-clkc.yaml    | 100 ++++++++++
  .../clock/amlogic,s7-peripherals-clkc.h       | 179 ++++++++++++++++++
- 2 files changed, 277 insertions(+)
+ 2 files changed, 279 insertions(+)
  create mode 100644 Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
  create mode 100644 include/dt-bindings/clock/amlogic,s7-peripherals-clkc.h
 
 diff --git a/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml b/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
 new file mode 100644
-index 000000000..43eb066a1
+index 000000000..2d773df26
 --- /dev/null
 +++ b/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,100 @@
 +# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 +%YAML 1.2
 +---
@@ -91,6 +91,8 @@ index 000000000..43eb066a1
 +
 +examples:
 +  - |
++    #include <dt-bindings/clock/amlogic,s7-pll-clkc.h>
++    #include <dt-bindings/clock/amlogic,s7-scmi-clkc.h>
 +    apb {
 +        #address-cells = <2>;
 +        #size-cells = <2>;
@@ -100,16 +102,16 @@ index 000000000..43eb066a1
 +            reg = <0 0x0 0 0x49c>;
 +            #clock-cells = <1>;
 +            clocks = <&xtal>,
-+                     <&clkc_pll 2>,
-+                     <&clkc_pll 4>,
-+                     <&clkc_pll 6>,
-+                     <&clkc_pll 8>,
-+                     <&clkc_pll 10>,
-+                     <&clkc_pll 12>,
-+                     <&clkc_pll 18>,
-+                     <&clkc_pll 20>,
-+                     <&clkc_pll 16>,
-+                     <&scmi_clk 11>;
++                     <&clkc_pll CLKID_FCLK_DIV2>,
++                     <&clkc_pll CLKID_FCLK_DIV2P5>,
++                     <&clkc_pll CLKID_FCLK_DIV3>,
++                     <&clkc_pll CLKID_FCLK_DIV4>,
++                     <&clkc_pll CLKID_FCLK_DIV5>,
++                     <&clkc_pll CLKID_FCLK_DIV7>,
++                     <&clkc_pll CLKID_HIFI_PLL>,
++                     <&clkc_pll CLKID_HIFI1_PLL>,
++                     <&clkc_pll CLKID_GP0_PLL>,
++                     <&scmi_clk CLKID_GP1_PLL>;
 +            clock-names = "xtal",
 +                          "fdiv2",
 +                          "fdiv2p5",

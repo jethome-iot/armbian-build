@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <v@baodeep.com>
-Date: Wed, 14 Oct 2026 11:31:39 +0300
-Subject: [PATCH 501/501] clk: meson: s7: add S7 peripherals clock controller
+Date: Wed, 14 Oct 2026 15:05:55 +0300
+Subject: [PATCH 504/506] clk: meson: s7: add S7 peripherals clock controller
  driver
 
 Add the peripherals clock controller driver for the Amlogic S7 SoC
@@ -18,19 +18,19 @@ out too: their register bits are unknown.
 
 Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
 ---
- drivers/clk/meson/Kconfig          |   14 +
+ drivers/clk/meson/Kconfig          |   15 +
  drivers/clk/meson/Makefile         |    1 +
  drivers/clk/meson/s7-peripherals.c | 1316 ++++++++++++++++++++++++++++
- 3 files changed, 1331 insertions(+)
+ 3 files changed, 1332 insertions(+)
  create mode 100644 drivers/clk/meson/s7-peripherals.c
 
 diff --git a/drivers/clk/meson/Kconfig b/drivers/clk/meson/Kconfig
-index d460514bb..0107312dc 100644
+index efbdde9cd..c5397d5f6 100644
 --- a/drivers/clk/meson/Kconfig
 +++ b/drivers/clk/meson/Kconfig
-@@ -229,6 +229,20 @@ config COMMON_CLK_S4_PERIPHERALS
- 	  Support for the peripherals clock controller on Amlogic S805X2 and S905Y4
- 	  devices, AKA S4. Say Y if you want S4 peripherals clock controller to work.
+@@ -243,6 +243,21 @@ config COMMON_CLK_S7_PLL
+ 	  GP0 and HiFi PLLs. Say Y if you want the board to work, because the
+ 	  PLLs are the parent of most peripherals.
  
 +config COMMON_CLK_S7_PERIPHERALS
 +	tristate "Amlogic S7 SoC peripherals clock controller support"
@@ -40,6 +40,7 @@ index d460514bb..0107312dc 100644
 +	select COMMON_CLK_MESON_CLKC_UTILS
 +	select COMMON_CLK_MESON_DUALDIV
 +	imply COMMON_CLK_SCMI
++	imply COMMON_CLK_S7_PLL
 +	help
 +	  Support for the peripherals clock controller on Amlogic S805X3 and
 +	  S905Y5 based devices, AKA S7. It provides the clocks of the MMC,
@@ -50,13 +51,13 @@ index d460514bb..0107312dc 100644
  	tristate "Amlogic T7 SoC PLL controller support"
  	depends on ARM64
 diff --git a/drivers/clk/meson/Makefile b/drivers/clk/meson/Makefile
-index 56b04254e..a76b2b3bb 100644
+index 9d439106d..1db3c4172 100644
 --- a/drivers/clk/meson/Makefile
 +++ b/drivers/clk/meson/Makefile
-@@ -28,5 +28,6 @@ obj-$(CONFIG_COMMON_CLK_G12A) += g12a.o g12a-aoclk.o
- obj-$(CONFIG_COMMON_CLK_MESON8B) += meson8b.o meson8-ddr.o
+@@ -29,5 +29,6 @@ obj-$(CONFIG_COMMON_CLK_MESON8B) += meson8b.o meson8-ddr.o
  obj-$(CONFIG_COMMON_CLK_S4_PLL) += s4-pll.o
  obj-$(CONFIG_COMMON_CLK_S4_PERIPHERALS) += s4-peripherals.o
+ obj-$(CONFIG_COMMON_CLK_S7_PLL) += s7-pll.o
 +obj-$(CONFIG_COMMON_CLK_S7_PERIPHERALS) += s7-peripherals.o
  obj-$(CONFIG_COMMON_CLK_T7_PLL) += t7-pll.o
  obj-$(CONFIG_COMMON_CLK_T7_PERIPHERALS) += t7-peripherals.o
