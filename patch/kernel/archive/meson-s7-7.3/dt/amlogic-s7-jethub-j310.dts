@@ -98,6 +98,43 @@
 		clock-output-names = "gp0_pll";
 	};
 
+	/*
+	 * BL31 exposes SCMI over SMC 0x820000c1 with the shared memory in
+	 * the secmon reserve, as the vendor DT describes. The clock protocol
+	 * on this board (checked 2026-10-14) exports 17 clocks: cpu_clk
+	 * (1704 MHz), dsu_clk (1344 MHz), aclkm (672 MHz), gp1_pll (off),
+	 * pwm_g/h/i/j (24 MHz) and the 24 MHz inputs of the DDR, USB, ETH,
+	 * ADC, HDMI and TOP PLLs. The fixed PLL, its dividers, GP0, HiFi and
+	 * all CLKCTRL muxes stay with the kernel: an S7 clock controller.
+	 */
+	sram@50f6000 {
+		compatible = "mmio-sram";
+		reg = <0x0 0x050f6000 0x0 0x100>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0 0x0 0x050f6000 0x100>;
+
+		scmi_shmem: scmi-sram@0 {
+			compatible = "arm,scmi-shmem";
+			reg = <0x0 0x100>;
+		};
+	};
+
+	firmware {
+		scmi {
+			compatible = "arm,scmi-smc";
+			arm,smc-id = <0x820000c1>;
+			shmem = <&scmi_shmem>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			scmi_clk: protocol@14 {
+				reg = <0x14>;
+				#clock-cells = <1>;
+			};
+		};
+	};
+
 	vddao_3v3: regulator-vddao-3v3 {
 		compatible = "regulator-fixed";
 		regulator-name = "VDDAO_3V3";
