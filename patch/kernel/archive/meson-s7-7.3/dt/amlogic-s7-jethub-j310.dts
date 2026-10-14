@@ -471,7 +471,6 @@
 			 <&clk_fclk_50m>;
 		clock-names = "pclk", "clkin0", "clkin1";
 		mdio-parent-bus = <&mdio0>;
-		status = "disabled";
 
 		ext_mdio: mdio@0 {
 			reg = <0>;
@@ -634,8 +633,9 @@
 	clock-frequency = <100000>;
 };
 
-/* Ethernet stays off until the clock controller is tested on the board */
+/* 100 Mbit over the internal RMII PHY */
 &ethmac {
+	status = "okay";
 	pinctrl-0 = <&eth_led_pins>;
 	pinctrl-names = "default";
 	phy-handle = <&internal_ephy>;
