@@ -7,8 +7,11 @@
  *
  * Bring-up stage. Mainline has no S7 clock controller yet, so the
  * peripherals run on fixed-clock placeholders: U-Boot leaves the gates
- * open and the PLLs running. The rates below are the vendor nominal
- * values. Verify them with the clock measurer before trusting them.
+ * open and the PLLs running. The clock measurer confirmed the rates on
+ * the board (2026-10-14): sys_clk 166.66 MHz, fclk_div5 400 MHz (so
+ * fclk_div2 1 GHz), fclk_50m 50 MHz, gp0_pll 1151.7 MHz, sd_emmc_c
+ * sourced from gp0_pll. The Ethernet clocks measure 0 Hz: U-Boot leaves
+ * them gated, so the MAC and the MDIO mux stay disabled.
  */
 
 /dts-v1/;
@@ -65,7 +68,7 @@
 		};
 	};
 
-	/* Clock placeholders, see the header comment */
+	/* Clock placeholders, see the header comment; rates measured */
 	clk_sys_pclk: clock-sys-pclk {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -87,7 +90,7 @@
 		clock-output-names = "fclk_50m";
 	};
 
-	/* vendor src_clk_rate for the MMC clock input */
+	/* MMC clock input (vendor src_clk_rate), measured 1151.7 MHz */
 	clk_gp0_pll: clock-gp0-pll {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -354,6 +357,7 @@
 		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_fclk_50m>;
 		clock-names = "pclk", "clkin0", "clkin1";
 		mdio-parent-bus = <&mdio0>;
+		status = "disabled";
 
 		ext_mdio: mdio@0 {
 			reg = <0>;
@@ -515,9 +519,9 @@
 };
 
 /*
- * Ethernet stays off until the clock gates are verified: a register
- * access through a closed gate hangs the bus. Enable it from U-Boot with
- * a /boot/fixup.scr ("fdt set /soc/bus@fe000000/ethernet@368000 status okay").
+ * Ethernet stays off: the clock measurer shows the Ethernet clocks at
+ * 0 Hz, so U-Boot leaves the gates closed and a register access would
+ * hang the bus. The MAC waits for the S7 clock controller.
  */
 &ethmac {
 	pinctrl-0 = <&eth_led_pins>;
