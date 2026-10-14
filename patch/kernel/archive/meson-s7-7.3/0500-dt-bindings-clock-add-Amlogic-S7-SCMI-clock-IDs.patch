@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <v@baodeep.com>
+Date: Wed, 14 Oct 2026 15:03:33 +0300
+Subject: [PATCH 500/506] dt-bindings: clock: add Amlogic S7 SCMI clock IDs
+
+The S7 firmware exposes the PLL reference oscillators, the CPU, DSU,
+ACLKM and GP1 PLL clocks and the PWM G to J clocks through SCMI. Add
+the IDs of this clock provider.
+
+Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
+---
+ .../dt-bindings/clock/amlogic,s7-scmi-clkc.h  | 27 +++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+ create mode 100644 include/dt-bindings/clock/amlogic,s7-scmi-clkc.h
+
+diff --git a/include/dt-bindings/clock/amlogic,s7-scmi-clkc.h b/include/dt-bindings/clock/amlogic,s7-scmi-clkc.h
+new file mode 100644
+index 000000000..53e2a1358
+--- /dev/null
++++ b/include/dt-bindings/clock/amlogic,s7-scmi-clkc.h
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: (GPL-2.0-only OR MIT) */
++/*
++ * Copyright (c) 2026 JetHome
++ */
++
++#ifndef __S7_SCMI_CLKC_H
++#define __S7_SCMI_CLKC_H
++
++#define CLKID_DDR_PHY_OSC		0
++#define CLKID_USB1_PLL_OSC		1
++#define CLKID_TOP_PLL_OSC		2
++#define CLKID_HDMI_PLL_OSC		3
++#define CLKID_USB0_PHY_PLL_OSC		4
++#define CLKID_USB1_PHY_PLL_OSC		5
++#define CLKID_USB0_PLL_OSC		6
++#define CLKID_ETH_PLL_OSC		7
++#define CLKID_ADC_PLL_OSC		8
++#define CLKID_CPU_CLK			9
++#define CLKID_DSU_CLK			10
++#define CLKID_GP1_PLL			11
++#define CLKID_ACLKM			12
++#define CLKID_PWM_G			13
++#define CLKID_PWM_H			14
++#define CLKID_PWM_I			15
++#define CLKID_PWM_J			16
++
++#endif /* __S7_SCMI_CLKC_H */
+-- 
+2.56.0
+

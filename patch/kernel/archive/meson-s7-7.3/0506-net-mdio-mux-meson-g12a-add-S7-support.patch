@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Viacheslav Bocharov <v@baodeep.com>
 Date: Wed, 14 Oct 2026 14:08:27 +0300
-Subject: [PATCH 503/503] net: mdio: mux-meson-g12a: add S7 support
+Subject: [PATCH 506/506] net: mdio: mux-meson-g12a: add S7 support
 
 The S7 MDIO multiplexer drives the internal PHY from a PLL with a
 different register layout. The register values and the delays come from
