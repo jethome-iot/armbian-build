@@ -1,0 +1,313 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <v@baodeep.com>
+Date: Wed, 14 Oct 2026 11:31:39 +0300
+Subject: [PATCH 500/501] dt-bindings: clock: add Amlogic S7 peripherals clock
+ controller
+
+Add DT bindings for the peripherals clock controller of the Amlogic S7
+SoC family (S805X3, S905Y5).
+
+The fixed PLL outputs, the GP0, GP1 and HiFi PLLs are inputs: the
+fixed PLL, GP0 and the HiFi PLLs sit in a separate register region, and
+GP1 belongs to the firmware.
+
+Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
+---
+ .../clock/amlogic,s7-peripherals-clkc.yaml    |  98 ++++++++++
+ .../clock/amlogic,s7-peripherals-clkc.h       | 179 ++++++++++++++++++
+ 2 files changed, 277 insertions(+)
+ create mode 100644 Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
+ create mode 100644 include/dt-bindings/clock/amlogic,s7-peripherals-clkc.h
+
+diff --git a/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml b/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
+new file mode 100644
+index 000000000..43eb066a1
+--- /dev/null
++++ b/Documentation/devicetree/bindings/clock/amlogic,s7-peripherals-clkc.yaml
+@@ -0,0 +1,98 @@
++# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/clock/amlogic,s7-peripherals-clkc.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: Amlogic S7 Peripherals Clock Controller
++
++maintainers:
++  - Neil Armstrong <neil.armstrong@linaro.org>
++  - Jerome Brunet <jbrunet@baylibre.com>
++  - Viacheslav Bocharov <v@baodeep.com>
++
++properties:
++  compatible:
++    const: amlogic,s7-peripherals-clkc
++
++  reg:
++    maxItems: 1
++
++  '#clock-cells':
++    const: 1
++
++  clocks:
++    minItems: 11
++    items:
++      - description: input oscillator
++      - description: input fclk div 2
++      - description: input fclk div 2p5
++      - description: input fclk div 3
++      - description: input fclk div 4
++      - description: input fclk div 5
++      - description: input fclk div 7
++      - description: input hifi pll
++      - description: input hifi1 pll
++      - description: input gp0 pll
++      - description: input gp1 pll
++      - description: external pad input for rtc (optional)
++
++  clock-names:
++    minItems: 11
++    items:
++      - const: xtal
++      - const: fdiv2
++      - const: fdiv2p5
++      - const: fdiv3
++      - const: fdiv4
++      - const: fdiv5
++      - const: fdiv7
++      - const: hifi
++      - const: hifi1
++      - const: gp0
++      - const: gp1
++      - const: ext_rtc
++
++required:
++  - compatible
++  - '#clock-cells'
++  - reg
++  - clocks
++  - clock-names
++
++additionalProperties: false
++
++examples:
++  - |
++    apb {
++        #address-cells = <2>;
++        #size-cells = <2>;
++
++        clock-controller@0 {
++            compatible = "amlogic,s7-peripherals-clkc";
++            reg = <0 0x0 0 0x49c>;
++            #clock-cells = <1>;
++            clocks = <&xtal>,
++                     <&clkc_pll 2>,
++                     <&clkc_pll 4>,
++                     <&clkc_pll 6>,
++                     <&clkc_pll 8>,
++                     <&clkc_pll 10>,
++                     <&clkc_pll 12>,
++                     <&clkc_pll 18>,
++                     <&clkc_pll 20>,
++                     <&clkc_pll 16>,
++                     <&scmi_clk 11>;
++            clock-names = "xtal",
++                          "fdiv2",
++                          "fdiv2p5",
++                          "fdiv3",
++                          "fdiv4",
++                          "fdiv5",
++                          "fdiv7",
++                          "hifi",
++                          "hifi1",
++                          "gp0",
++                          "gp1";
++        };
++    };
+diff --git a/include/dt-bindings/clock/amlogic,s7-peripherals-clkc.h b/include/dt-bindings/clock/amlogic,s7-peripherals-clkc.h
+new file mode 100644
+index 000000000..e2c8e740e
+--- /dev/null
++++ b/include/dt-bindings/clock/amlogic,s7-peripherals-clkc.h
+@@ -0,0 +1,179 @@
++/* SPDX-License-Identifier: (GPL-2.0-only OR MIT) */
++/*
++ * Copyright (c) 2026 JetHome
++ */
++
++#ifndef __S7_PERIPHERALS_CLKC_H
++#define __S7_PERIPHERALS_CLKC_H
++
++#define CLKID_RTC_DUALDIV_IN		0
++#define CLKID_RTC_DUALDIV_DIV		1
++#define CLKID_RTC_DUALDIV_SEL		2
++#define CLKID_RTC_DUALDIV		3
++#define CLKID_RTC			4
++#define CLKID_CECB_DUALDIV_IN		5
++#define CLKID_CECB_DUALDIV_DIV		6
++#define CLKID_CECB_DUALDIV_SEL		7
++#define CLKID_CECB_DUALDIV		8
++#define CLKID_CECB			9
++#define CLKID_SYS_CLK_0_SEL		10
++#define CLKID_SYS_CLK_0_DIV		11
++#define CLKID_SYS_CLK_0			12
++#define CLKID_SYS_CLK_1_SEL		13
++#define CLKID_SYS_CLK_1_DIV		14
++#define CLKID_SYS_CLK_1			15
++#define CLKID_SYS_CLK			16
++#define CLKID_AXI_CLK_0_SEL		17
++#define CLKID_AXI_CLK_0_DIV		18
++#define CLKID_AXI_CLK_0			19
++#define CLKID_AXI_CLK_1_SEL		20
++#define CLKID_AXI_CLK_1_DIV		21
++#define CLKID_AXI_CLK_1			22
++#define CLKID_AXI_CLK			23
++#define CLKID_12_24M_IN			24
++#define CLKID_12_24M			25
++#define CLKID_SC_SEL			26
++#define CLKID_SC_DIV			27
++#define CLKID_SC			28
++#define CLKID_TS_DIV			29
++#define CLKID_TS			30
++#define CLKID_ETH_RMII_DIV		31
++#define CLKID_ETH_RMII			32
++#define CLKID_ETH_125M_DIV		33
++#define CLKID_ETH_125M			34
++#define CLKID_MALI_0_SEL		35
++#define CLKID_MALI_0_DIV		36
++#define CLKID_MALI_0			37
++#define CLKID_MALI_1_SEL		38
++#define CLKID_MALI_1_DIV		39
++#define CLKID_MALI_1			40
++#define CLKID_MALI			41
++#define CLKID_VDEC_0_SEL		42
++#define CLKID_VDEC_0_DIV		43
++#define CLKID_VDEC_0			44
++#define CLKID_VDEC_1_SEL		45
++#define CLKID_VDEC_1_DIV		46
++#define CLKID_VDEC_1			47
++#define CLKID_VDEC			48
++#define CLKID_HEVCF_0_SEL		49
++#define CLKID_HEVCF_0_DIV		50
++#define CLKID_HEVCF_0			51
++#define CLKID_HEVCF_1_SEL		52
++#define CLKID_HEVCF_1_DIV		53
++#define CLKID_HEVCF_1			54
++#define CLKID_HEVCF			55
++#define CLKID_VPU_0_SEL			56
++#define CLKID_VPU_0_DIV			57
++#define CLKID_VPU_0			58
++#define CLKID_VPU_1_SEL			59
++#define CLKID_VPU_1_DIV			60
++#define CLKID_VPU_1			61
++#define CLKID_VPU			62
++#define CLKID_VPU_CLKB_TMP_SEL		63
++#define CLKID_VPU_CLKB_TMP_DIV		64
++#define CLKID_VPU_CLKB_TMP		65
++#define CLKID_VPU_CLKB_DIV		66
++#define CLKID_VPU_CLKB			67
++#define CLKID_VPU_CLKC_0_SEL		68
++#define CLKID_VPU_CLKC_0_DIV		69
++#define CLKID_VPU_CLKC_0		70
++#define CLKID_VPU_CLKC_1_SEL		71
++#define CLKID_VPU_CLKC_1_DIV		72
++#define CLKID_VPU_CLKC_1		73
++#define CLKID_VPU_CLKC			74
++#define CLKID_VAPB_0_SEL		75
++#define CLKID_VAPB_0_DIV		76
++#define CLKID_VAPB_0			77
++#define CLKID_VAPB_1_SEL		78
++#define CLKID_VAPB_1_DIV		79
++#define CLKID_VAPB_1			80
++#define CLKID_VAPB			81
++#define CLKID_GE2D			82
++#define CLKID_VDIN_MEAS_SEL		83
++#define CLKID_VDIN_MEAS_DIV		84
++#define CLKID_VDIN_MEAS			85
++#define CLKID_SD_EMMC_A_SEL		86
++#define CLKID_SD_EMMC_A_DIV		87
++#define CLKID_SD_EMMC_A			88
++#define CLKID_SD_EMMC_B_SEL		89
++#define CLKID_SD_EMMC_B_DIV		90
++#define CLKID_SD_EMMC_B			91
++#define CLKID_SD_EMMC_C_SEL		92
++#define CLKID_SD_EMMC_C_DIV		93
++#define CLKID_SD_EMMC_C			94
++#define CLKID_SPICC0_SEL		95
++#define CLKID_SPICC0_DIV		96
++#define CLKID_SPICC0			97
++#define CLKID_PWM_A_SEL			98
++#define CLKID_PWM_A_DIV			99
++#define CLKID_PWM_A			100
++#define CLKID_PWM_B_SEL			101
++#define CLKID_PWM_B_DIV			102
++#define CLKID_PWM_B			103
++#define CLKID_PWM_C_SEL			104
++#define CLKID_PWM_C_DIV			105
++#define CLKID_PWM_C			106
++#define CLKID_PWM_D_SEL			107
++#define CLKID_PWM_D_DIV			108
++#define CLKID_PWM_D			109
++#define CLKID_PWM_E_SEL			110
++#define CLKID_PWM_E_DIV			111
++#define CLKID_PWM_E			112
++#define CLKID_PWM_F_SEL			113
++#define CLKID_PWM_F_DIV			114
++#define CLKID_PWM_F			115
++#define CLKID_SAR_ADC_SEL		116
++#define CLKID_SAR_ADC_DIV		117
++#define CLKID_SAR_ADC			118
++#define CLKID_GEN_SEL			119
++#define CLKID_GEN_DIV			120
++#define CLKID_GEN			121
++#define CLKID_SYS_DDR			122
++#define CLKID_SYS_DOS			123
++#define CLKID_SYS_ETHPHY		124
++#define CLKID_SYS_MALI			125
++#define CLKID_SYS_AOCPU			126
++#define CLKID_SYS_AUCPU			127
++#define CLKID_SYS_CEC			128
++#define CLKID_SYS_SD_EMMC_A		129
++#define CLKID_SYS_SD_EMMC_B		130
++#define CLKID_SYS_SD_EMMC_C		131
++#define CLKID_SYS_SMARTCARD		132
++#define CLKID_SYS_ACODEC		133
++#define CLKID_SYS_MSR_CLK		134
++#define CLKID_SYS_IR_CTRL		135
++#define CLKID_SYS_AUDIO			136
++#define CLKID_SYS_ETH			137
++#define CLKID_SYS_UART_A		138
++#define CLKID_SYS_UART_B		139
++#define CLKID_SYS_UART_C		140
++#define CLKID_SYS_UART_D		141
++#define CLKID_SYS_UART_E		142
++#define CLKID_SYS_TS_PLL		143
++#define CLKID_SYS_SPICC0		144
++#define CLKID_SYS_USB			145
++#define CLKID_SYS_I2C_M_A		146
++#define CLKID_SYS_I2C_M_B		147
++#define CLKID_SYS_I2C_M_C		148
++#define CLKID_SYS_I2C_M_D		149
++#define CLKID_SYS_I2C_M_E		150
++#define CLKID_SYS_HDMITX_APB		151
++#define CLKID_SYS_I2C_S_A		152
++#define CLKID_SYS_HDMI20_AES		153
++#define CLKID_SYS_MMC_APB		154
++#define CLKID_SYS_CPU_APB		155
++#define CLKID_SYS_VPU_INTR		156
++#define CLKID_SYS_SAR_ADC		157
++#define CLKID_SYS_PWM_J			158
++#define CLKID_SYS_GIC			159
++#define CLKID_SYS_PWM_I			160
++#define CLKID_SYS_PWM_H			161
++#define CLKID_SYS_PWM_G			162
++#define CLKID_SYS_PWM_F			163
++#define CLKID_SYS_PWM_E			164
++#define CLKID_SYS_PWM_D			165
++#define CLKID_SYS_PWM_C			166
++#define CLKID_SYS_PWM_B			167
++#define CLKID_SYS_PWM_A			168
++
++#endif /* __S7_PERIPHERALS_CLKC_H */
+-- 
+2.56.0
+

@@ -5,19 +5,19 @@
  * JetHub D3 (J310): Amlogic S905Y5 (S7), 2-4 GiB RAM, eMMC, SD, 100 Mbit
  * Ethernet, USB 2.0, four UXM module slots.
  *
- * Bring-up stage. Mainline has no S7 clock controller yet, so the
- * peripherals run on fixed-clock placeholders: U-Boot leaves the gates
- * open and the PLLs running. The clock measurer confirmed the rates on
- * the board (2026-10-14): sys_clk 166.66 MHz, fclk_div5 400 MHz (so
- * fclk_div2 1 GHz), fclk_50m 50 MHz, gp0_pll 1151.7 MHz, sd_emmc_c
- * sourced from gp0_pll. The Ethernet clocks measure 0 Hz: U-Boot leaves
- * them gated, so the MAC and the MDIO mux stay disabled.
+ * Bring-up stage. The peripherals clock controller is in place; the PLL
+ * controller is not, so the fixed PLL outputs and the GP0/HiFi PLLs are
+ * fixed-clock placeholders: U-Boot leaves them running. The clock
+ * measurer confirmed the rates on the board (2026-10-14): fclk_div5
+ * 400 MHz (so fixed_pll 2 GHz), fclk_50m 50 MHz, gp0_pll 1151.7 MHz,
+ * hifi_pll 491.5 MHz; BL2 prints the same PLL rates.
  */
 
 /dts-v1/;
 
 #include "amlogic-s7.dtsi"
 #include "amlogic-s7-reset.h"
+#include <dt-bindings/clock/amlogic,s7-peripherals-clkc.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/amlogic,pinctrl.h>
@@ -68,19 +68,47 @@
 		};
 	};
 
-	/* Clock placeholders, see the header comment; rates measured */
-	clk_sys_pclk: clock-sys-pclk {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <166666667>;
-		clock-output-names = "sys_pclk";
-	};
-
+	/* PLL placeholders, see the header comment; rates measured */
 	clk_fclk_div2: clock-fclk-div2 {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <1000000000>;
 		clock-output-names = "fclk_div2";
+	};
+
+	clk_fclk_div2p5: clock-fclk-div2p5 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <800000000>;
+		clock-output-names = "fclk_div2p5";
+	};
+
+	clk_fclk_div3: clock-fclk-div3 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <666666667>;
+		clock-output-names = "fclk_div3";
+	};
+
+	clk_fclk_div4: clock-fclk-div4 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <500000000>;
+		clock-output-names = "fclk_div4";
+	};
+
+	clk_fclk_div5: clock-fclk-div5 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <400000000>;
+		clock-output-names = "fclk_div5";
+	};
+
+	clk_fclk_div7: clock-fclk-div7 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <285714286>;
+		clock-output-names = "fclk_div7";
 	};
 
 	clk_fclk_50m: clock-fclk-50m {
@@ -90,12 +118,27 @@
 		clock-output-names = "fclk_50m";
 	};
 
-	/* MMC clock input (vendor src_clk_rate), measured 1151.7 MHz */
+	/* MMC clock source (vendor src_clk_rate), measured 1151.7 MHz */
 	clk_gp0_pll: clock-gp0-pll {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <1152000000>;
 		clock-output-names = "gp0_pll";
+	};
+
+	clk_hifi_pll: clock-hifi-pll {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <491520000>;
+		clock-output-names = "hifi_pll";
+	};
+
+	/* off on this board, nothing selects it */
+	clk_hifi1_pll: clock-hifi1-pll {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <491520000>;
+		clock-output-names = "hifi1_pll";
 	};
 
 	/*
@@ -332,11 +375,39 @@
  * the mainline meson-s4.dtsi.
  */
 &apb {
+	clkc_periphs: clock-controller@0 {
+		compatible = "amlogic,s7-peripherals-clkc";
+		reg = <0x0 0x0 0x0 0x49c>;
+		#clock-cells = <1>;
+		clocks = <&xtal>,
+			 <&clk_fclk_div2>,
+			 <&clk_fclk_div2p5>,
+			 <&clk_fclk_div3>,
+			 <&clk_fclk_div4>,
+			 <&clk_fclk_div5>,
+			 <&clk_fclk_div7>,
+			 <&clk_hifi_pll>,
+			 <&clk_hifi1_pll>,
+			 <&clk_gp0_pll>,
+			 <&scmi_clk 11>; /* gp1_pll */
+		clock-names = "xtal",
+			      "fdiv2",
+			      "fdiv2p5",
+			      "fdiv3",
+			      "fdiv4",
+			      "fdiv5",
+			      "fdiv7",
+			      "hifi",
+			      "hifi1",
+			      "gp0",
+			      "gp1";
+	};
+
 	i2c2: i2c@66800 {
 		compatible = "amlogic,meson-axg-i2c";
 		reg = <0x0 0x66800 0x0 0x20>;
 		interrupts = <GIC_SPI 162 IRQ_TYPE_EDGE_RISING>;
-		clocks = <&clk_sys_pclk>;
+		clocks = <&clkc_periphs CLKID_SYS_I2C_M_C>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "disabled";
@@ -346,7 +417,7 @@
 		compatible = "amlogic,meson-axg-i2c";
 		reg = <0x0 0x66c00 0x0 0x20>;
 		interrupts = <GIC_SPI 163 IRQ_TYPE_EDGE_RISING>;
-		clocks = <&clk_sys_pclk>;
+		clocks = <&clkc_periphs CLKID_SYS_I2C_M_D>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "disabled";
@@ -356,7 +427,7 @@
 		compatible = "amlogic,meson-axg-i2c";
 		reg = <0x0 0x67000 0x0 0x20>;
 		interrupts = <GIC_SPI 164 IRQ_TYPE_EDGE_RISING>;
-		clocks = <&clk_sys_pclk>;
+		clocks = <&clkc_periphs CLKID_SYS_I2C_M_E>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		status = "disabled";
@@ -366,7 +437,9 @@
 		compatible = "amlogic,meson-axg-mmc";
 		reg = <0x0 0x8a000 0x0 0x800>;
 		interrupts = <GIC_SPI 177 IRQ_TYPE_EDGE_RISING>;
-		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_gp0_pll>;
+		clocks = <&clkc_periphs CLKID_SYS_SD_EMMC_B>,
+			 <&xtal>,
+			 <&clkc_periphs CLKID_SD_EMMC_B>;
 		clock-names = "core", "clkin0", "clkin1";
 		resets = <&reset RESET_SD_EMMC_B>;
 		power-domains = <&pwrc PWRC_S7_SD_EMMC_B_ID>;
@@ -377,7 +450,9 @@
 		compatible = "amlogic,meson-axg-mmc";
 		reg = <0x0 0x8c000 0x0 0x800>;
 		interrupts = <GIC_SPI 178 IRQ_TYPE_EDGE_RISING>;
-		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_gp0_pll>;
+		clocks = <&clkc_periphs CLKID_SYS_SD_EMMC_C>,
+			 <&xtal>,
+			 <&clkc_periphs CLKID_SD_EMMC_C>;
 		clock-names = "core", "clkin0", "clkin1";
 		resets = <&reset RESET_SD_EMMC_C>;
 		power-domains = <&pwrc PWRC_S7_SD_EMMC_C_ID>;
@@ -391,7 +466,9 @@
 		reg = <0x0 0x360000 0x0 0xa4>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		clocks = <&clk_sys_pclk>, <&xtal>, <&clk_fclk_50m>;
+		clocks = <&clkc_periphs CLKID_SYS_ETHPHY>,
+			 <&xtal>,
+			 <&clk_fclk_50m>;
 		clock-names = "pclk", "clkin0", "clkin1";
 		mdio-parent-bus = <&mdio0>;
 		status = "disabled";
@@ -426,7 +503,9 @@
 		interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
 		interrupt-names = "macirq";
 		power-domains = <&pwrc PWRC_S7_ETH_ID>;
-		clocks = <&clk_sys_pclk>, <&clk_fclk_div2>, <&clk_fclk_50m>;
+		clocks = <&clkc_periphs CLKID_SYS_ETH>,
+			 <&clk_fclk_div2>,
+			 <&clk_fclk_50m>;
 		clock-names = "stmmaceth", "clkin0", "clkin1";
 		rx-fifo-depth = <4096>;
 		tx-fifo-depth = <2048>;
@@ -555,11 +634,7 @@
 	clock-frequency = <100000>;
 };
 
-/*
- * Ethernet stays off: the clock measurer shows the Ethernet clocks at
- * 0 Hz, so U-Boot leaves the gates closed and a register access would
- * hang the bus. The MAC waits for the S7 clock controller.
- */
+/* Ethernet stays off until the clock controller is tested on the board */
 &ethmac {
 	pinctrl-0 = <&eth_led_pins>;
 	pinctrl-names = "default";
@@ -567,6 +642,8 @@
 	phy-mode = "rmii";
 };
 
+/* console; the pclk gate is in the peripherals clock controller */
 &uart_b {
+	clocks = <&xtal>, <&clkc_periphs CLKID_SYS_UART_B>, <&xtal>;
 	status = "okay";
 };
