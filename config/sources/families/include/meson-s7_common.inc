@@ -43,6 +43,7 @@ function custom_kernel_config__meson_s7_soc_drivers() {
 		CONFIG_ARM_SCMI_TRANSPORT_SMC
 		CONFIG_COMMON_CLK_SCMI
 		CONFIG_ARM_SCMI_CPUFREQ
+		CONFIG_COMMON_CLK_S7_PERIPHERALS
 	)
 	# meson_uart registers ttyS0 in 7.x; the 8250 placeholders steal the name
 	# and the serial console gets no getty.
