@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Carlo Caione <ccaione@baylibre.com>
+Date: Thu, 22 Oct 2026 20:30:29 +0200
+Subject: [PATCH 22/22] arm64: dts: amlogic: s7: describe the GIC
+ virtualization regions
+
+The S7 device tree describes the distributor and the CPU interface of
+the GIC-400, but not its virtual interface control (GICH) and virtual
+CPU interface (GICV) regions. Without them the GIC driver does not hand
+the GIC over to KVM, which then runs without the in-kernel vGIC.
+
+Describe both regions at their GIC-400 offsets, as S4 does for its
+GIC-400 at the same address.
+
+Signed-off-by: Carlo Caione <ccaione@baylibre.com>
+Reviewed-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi b/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
+index 324365e..95b903b 100644
+--- a/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
++++ b/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
+@@ -122,7 +122,9 @@
+ 			#address-cells = <0>;
+ 			interrupt-controller;
+ 			reg = <0x0 0xfff01000 0 0x1000>,
+-			      <0x0 0xfff02000 0 0x2000>;
++			      <0x0 0xfff02000 0 0x2000>,
++			      <0x0 0xfff04000 0 0x2000>,
++			      <0x0 0xfff06000 0 0x2000>;
+ 			interrupts = <GIC_PPI 9 0xf04>;
+ 		};
+ 
