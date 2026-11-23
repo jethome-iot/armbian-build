@@ -1,0 +1,14 @@
+# Assign the future charging point to this circuit in the evcc UI.
+# Current limits apply per phase.
+- name: station
+  title: Future station
+  maxCurrent: 6 # Fallback before the first valid input message.
+  GetMaxCurrent:
+    source: mqtt
+    broker: 127.0.0.1:1883
+    topic: jethub-mqtt-io/input/jethub_input_2
+    quote: true
+    jq: >-
+      if . == "ON" then 6
+      elif . == "OFF" then 16
+      else error("Expected ON or OFF") end
