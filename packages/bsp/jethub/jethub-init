@@ -44,7 +44,12 @@ gpio_set()
 		if [[ "${LOW}" == "${GPIO_ACTIVE_LOW}" ]]; then
 			args=(--active-low)
 		fi
-		"${GPIOSET}" "${args[@]}" --toggle 0 -c "${gpiochip}" "${GPIOL}=${VALUE}"
+		if [[ "${GPIOSET_TOGGLE}" == "yes" ]]; then
+			"${GPIOSET}" "${args[@]}" --toggle 0 -c "${gpiochip}" "${GPIOL}=${VALUE}"
+		else
+			# libgpiod 1: the default mode sets the value and exits
+			"${GPIOSET}" "${args[@]}" "${gpiochip}" "${GPIOL}=${VALUE}"
+		fi
 	fi
 }
 
@@ -111,6 +116,11 @@ load_gpio_config() {
 	fi
 	ENABLESYSFS=${JETHUB_SYSFS_ENABLE:-true}
 	GPIOSET=${GPIOSET:-/usr/bin/gpioset}
+	# libgpiod 2 replaced the gpioset modes with --toggle
+	GPIOSET_TOGGLE=no
+	if [[ "${ENABLESYSFS}" != "true" ]] && "${GPIOSET}" --help 2> /dev/null | grep -q -- --toggle; then
+		GPIOSET_TOGGLE=yes
+	fi
 }
 
 init_gpio() {
