@@ -1,0 +1,14 @@
+[Unit]
+Description=JetHub IN1 control for evcc Relay 1
+Wants=mosquitto.service gpio2mqtt.service evcc.service
+After=mosquitto.service gpio2mqtt.service evcc.service
+
+[Service]
+User=evcc
+Group=evcc
+ExecStart=/usr/bin/python3 /usr/local/lib/gpio2mqtt/evcc-input.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
