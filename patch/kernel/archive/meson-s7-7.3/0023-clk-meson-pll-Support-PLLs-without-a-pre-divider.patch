@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Carlo Caione <ccaione@baylibre.com>
+Date: Fri, 20 Nov 2026 14:11:04 +0100
+Subject: [PATCH 23/31] clk: meson: pll: Support PLLs without a pre-divider
+
+The common PLL code assumes that every PLL has a pre-divider. This
+does not hold for the S7 HDMI PLL, and the S7 GP0 and HIFI PLLs are
+meant to run with theirs set to 1.
+
+Make the pre-divider optional so these PLLs can use the common
+implementation.
+
+Signed-off-by: Carlo Caione <ccaione@baylibre.com>
+Link: https://patch.msgid.link/20261120-upstream-s7-clk-v2-1-856cece3b9f2@baylibre.com
+Signed-off-by: Jerome Brunet <jbrunet@baylibre.com>
+---
+ drivers/clk/meson/clk-pll.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/clk/meson/clk-pll.c b/drivers/clk/meson/clk-pll.c
+index 1ea6579a760f..44b33051405f 100644
+--- a/drivers/clk/meson/clk-pll.c
++++ b/drivers/clk/meson/clk-pll.c
+@@ -76,7 +76,9 @@ static unsigned long meson_clk_pll_recalc_rate(struct clk_hw *hw,
+ 	struct meson_clk_pll_data *pll = meson_clk_pll_data(clk);
+ 	unsigned int m, n, frac;
+ 
+-	n = meson_parm_read(clk->map, &pll->n);
++	n = MESON_PARM_APPLICABLE(&pll->n) ?
++		meson_parm_read(clk->map, &pll->n) :
++		1;
+ 
+ 	/*
+ 	 * On some HW, N is set to zero on init. This value is invalid as
+@@ -174,7 +176,7 @@ static int meson_clk_get_pll_range_index(unsigned long rate,
+ 	*n = index + 1;
+ 
+ 	/* Check the predivider range */
+-	if (*n >= (1 << pll->n.width))
++	if (*n >= (MESON_PARM_APPLICABLE(&pll->n) ? 1 << pll->n.width : 2))
+ 		return -EINVAL;
+ 
+ 	if (*n == 1) {
+@@ -437,7 +439,8 @@ static int meson_clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+ 	if (enabled)
+ 		meson_clk_pll_disable(hw);
+ 
+-	meson_parm_write(clk->map, &pll->n, n);
++	if (MESON_PARM_APPLICABLE(&pll->n))
++		meson_parm_write(clk->map, &pll->n, n);
+ 	meson_parm_write(clk->map, &pll->m, m);
+ 
+ 	if (MESON_PARM_APPLICABLE(&pll->frac)) {

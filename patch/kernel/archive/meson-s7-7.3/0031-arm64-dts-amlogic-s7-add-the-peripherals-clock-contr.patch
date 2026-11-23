@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Carlo Caione <ccaione@baylibre.com>
+Date: Mon, 23 Nov 2026 10:20:47 +0100
+Subject: [PATCH 31/31] arm64: dts: amlogic: s7: add the peripherals clock
+ controller
+
+Add the peripherals clock controller of the Amlogic S7 SoC family.
+
+Signed-off-by: Carlo Caione <ccaione@baylibre.com>
+---
+ arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi | 34 +++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi b/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
+index 57f3b7afd1d6..8ad299a868ff 100644
+--- a/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
++++ b/arch/arm64/boot/dts/amlogic/amlogic-s7.dtsi
+@@ -165,6 +165,40 @@ apb: bus@fe000000 {
+ 			#size-cells = <2>;
+ 			ranges = <0x0 0x0 0x0 0xfe000000 0x0 0x480000>;
+ 
++			clkc_periphs: clock-controller@0 {
++				compatible = "amlogic,s7-peripherals-clkc";
++				reg = <0x0 0x0 0x0 0x49c>;
++				#clock-cells = <1>;
++				clocks = <&clkc_pll CLKID_FCLK_DIV2>,
++					 <&clkc_pll CLKID_FCLK_DIV2P5>,
++					 <&clkc_pll CLKID_FCLK_DIV3>,
++					 <&clkc_pll CLKID_FCLK_DIV4>,
++					 <&clkc_pll CLKID_FCLK_DIV5>,
++					 <&clkc_pll CLKID_FCLK_DIV7>,
++					 <&clkc_pll CLKID_HIFI0_PLL>,
++					 <&clkc_pll CLKID_GP0_PLL>,
++					 <&clkc_pll CLKID_HIFI1_PLL>,
++					 <&scmi_clk CLKID_GP1_PLL>,
++					 <&clkc_pll CLKID_HDMI_PLL>,
++					 <&clkc_pll CLKID_HDMI_PLL_PIX>,
++					 <&xtal>,
++					 <&scmi_clk CLKID_ACLKM>;
++				clock-names = "fclk_div2",
++					      "fclk_div2p5",
++					      "fclk_div3",
++					      "fclk_div4",
++					      "fclk_div5",
++					      "fclk_div7",
++					      "hifi0_pll",
++					      "gp0_pll",
++					      "hifi1_pll",
++					      "gp1_pll",
++					      "hdmi_pll",
++					      "vid_pix",
++					      "xtal",
++					      "axi_frcpu";
++			};
++
+ 			clkc_pll: clock-controller@8000 {
+ 				compatible = "amlogic,s7-pll-clkc";
+ 				reg = <0x0 0x8000 0x0 0x1e8>;

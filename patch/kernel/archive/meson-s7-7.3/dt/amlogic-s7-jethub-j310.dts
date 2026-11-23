@@ -5,9 +5,8 @@
  * JetHub D3 (J310): Amlogic S905Y5 (S7), 2-4 GiB RAM, eMMC, SD, 100 Mbit
  * Ethernet, USB 2.0, four UXM module slots.
  *
- * Bring-up stage. The peripherals and PLL clock controllers are in
- * place. The PLL reference oscillator, the CPU clock and the GP1 PLL
- * come from the firmware through SCMI.
+ * Bring-up stage. The SCMI node and the PLL and peripherals clock
+ * controllers come from the S7 dtsi.
  */
 
 /dts-v1/;
@@ -16,7 +15,6 @@
 #include "amlogic-s7-reset.h"
 #include <dt-bindings/clock/amlogic,s7-peripherals-clkc.h>
 #include <dt-bindings/clock/amlogic,s7-pll-clkc.h>
-#include <dt-bindings/clock/amlogic,s7-scmi-clkc.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/amlogic,pinctrl.h>
@@ -68,40 +66,16 @@
 	};
 
 	/*
-	 * BL31 exposes SCMI over SMC 0x820000c1 with the shared memory in
-	 * the secmon reserve, as the vendor DT describes. The clock protocol
-	 * on this board (checked 2026-10-14) exports 17 clocks: cpu_clk
-	 * (1704 MHz), dsu_clk (1344 MHz), aclkm (672 MHz), gp1_pll (off),
-	 * pwm_g/h/i/j (24 MHz) and the 24 MHz inputs of the DDR, USB, ETH,
-	 * ADC, HDMI and TOP PLLs. The fixed PLL, its dividers, GP0, HiFi and
-	 * all CLKCTRL muxes stay with the kernel: an S7 clock controller.
+	 * 50 MHz output of the fixed PLL (FIXPLL_CTRL1 bit 31). The PLL clock
+	 * controller does not export it; the firmware leaves it running.
 	 */
-	sram@50f6000 {
-		compatible = "mmio-sram";
-		reg = <0x0 0x050f6000 0x0 0x100>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges = <0 0x0 0x050f6000 0x100>;
-
-		scmi_shmem: scmi-sram@0 {
-			compatible = "arm,scmi-shmem";
-			reg = <0x0 0x100>;
-		};
-	};
-
-	firmware {
-		scmi {
-			compatible = "arm,scmi-smc";
-			arm,smc-id = <0x820000c1>;
-			shmem = <&scmi_shmem>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			scmi_clk: protocol@14 {
-				reg = <0x14>;
-				#clock-cells = <1>;
-			};
-		};
+	fclk_50m: clock-fclk-50m {
+		compatible = "fixed-factor-clock";
+		#clock-cells = <0>;
+		clocks = <&clkc_pll CLKID_FIXED_PLL>;
+		clock-div = <40>;
+		clock-mult = <1>;
+		clock-output-names = "fclk_50m";
 	};
 
 	vddao_3v3: regulator-vddao-3v3 {
@@ -301,42 +275,6 @@
  * the mainline meson-s4.dtsi.
  */
 &apb {
-	clkc_periphs: clock-controller@0 {
-		compatible = "amlogic,s7-peripherals-clkc";
-		reg = <0x0 0x0 0x0 0x49c>;
-		#clock-cells = <1>;
-		clocks = <&xtal>,
-			 <&clkc_pll CLKID_FCLK_DIV2>,
-			 <&clkc_pll CLKID_FCLK_DIV2P5>,
-			 <&clkc_pll CLKID_FCLK_DIV3>,
-			 <&clkc_pll CLKID_FCLK_DIV4>,
-			 <&clkc_pll CLKID_FCLK_DIV5>,
-			 <&clkc_pll CLKID_FCLK_DIV7>,
-			 <&clkc_pll CLKID_HIFI_PLL>,
-			 <&clkc_pll CLKID_HIFI1_PLL>,
-			 <&clkc_pll CLKID_GP0_PLL>,
-			 <&scmi_clk CLKID_GP1_PLL>;
-		clock-names = "xtal",
-			      "fdiv2",
-			      "fdiv2p5",
-			      "fdiv3",
-			      "fdiv4",
-			      "fdiv5",
-			      "fdiv7",
-			      "hifi",
-			      "hifi1",
-			      "gp0",
-			      "gp1";
-	};
-
-	clkc_pll: clock-controller@8000 {
-		compatible = "amlogic,s7-pll-clkc";
-		reg = <0x0 0x8000 0x0 0x1e8>;
-		#clock-cells = <1>;
-		clocks = <&scmi_clk CLKID_TOP_PLL_OSC>;
-		clock-names = "top";
-	};
-
 	i2c2: i2c@66800 {
 		compatible = "amlogic,meson-axg-i2c";
 		reg = <0x0 0x66800 0x0 0x20>;
@@ -400,9 +338,9 @@
 		reg = <0x0 0x360000 0x0 0xa4>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		clocks = <&clkc_periphs CLKID_SYS_ETHPHY>,
+		clocks = <&clkc_periphs CLKID_SYS_ETH_PHY>,
 			 <&xtal>,
-			 <&clkc_pll CLKID_FCLK_50M>;
+			 <&fclk_50m>;
 		clock-names = "pclk", "clkin0", "clkin1";
 		mdio-parent-bus = <&mdio0>;
 
@@ -438,7 +376,7 @@
 		power-domains = <&pwrc PWRC_S7_ETH_ID>;
 		clocks = <&clkc_periphs CLKID_SYS_ETH>,
 			 <&clkc_pll CLKID_FCLK_DIV2>,
-			 <&clkc_pll CLKID_FCLK_50M>;
+			 <&fclk_50m>;
 		clock-names = "stmmaceth", "clkin0", "clkin1";
 		rx-fifo-depth = <4096>;
 		tx-fifo-depth = <2048>;
