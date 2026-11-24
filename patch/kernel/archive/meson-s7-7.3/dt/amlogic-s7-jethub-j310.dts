@@ -78,6 +78,28 @@
 		clock-output-names = "fclk_50m";
 	};
 
+	thermal-zones {
+		cpu-thermal {
+			polling-delay = <1000>;
+			polling-delay-passive = <100>;
+			thermal-sensors = <&cpu_temp>;
+
+			trips {
+				cpu_passive: cpu-passive {
+					temperature = <80000>;
+					hysteresis = <5000>;
+					type = "passive";
+				};
+
+				cpu_critical: cpu-critical {
+					temperature = <100000>;
+					hysteresis = <1000>;
+					type = "critical";
+				};
+			};
+		};
+	};
+
 	vddao_3v3: regulator-vddao-3v3 {
 		compatible = "regulator-fixed";
 		regulator-name = "VDDAO_3V3";
@@ -275,6 +297,17 @@
  * the mainline meson-s4.dtsi.
  */
 &apb {
+	cpu_temp: temperature-sensor@20000 {
+		compatible = "amlogic,s7-thermal";
+		reg = <0x0 0x20000 0x0 0x50>;
+		interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&clkc_periphs CLKID_SYS_TS_PLL>,
+			 <&clkc_periphs CLKID_TS>;
+		clock-names = "bus", "core";
+		#thermal-sensor-cells = <0>;
+		amlogic,secure-monitor = <&sm 1>;
+	};
+
 	i2c2: i2c@66800 {
 		compatible = "amlogic,meson-axg-i2c";
 		reg = <0x0 0x66800 0x0 0x20>;
