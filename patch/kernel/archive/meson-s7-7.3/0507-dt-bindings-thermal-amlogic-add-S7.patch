@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <v@baodeep.com>
+Date: Tue, 24 Nov 2026 15:55:12 +0300
+Subject: [PATCH 507/508] dt-bindings: thermal: amlogic: add S7
+
+The S7 temperature sensor is the G12A design. As on T7, the secure
+monitor reports its calibration, and the sensor takes a bus clock and a
+functional clock.
+
+Add the amlogic,s7-thermal compatible.
+
+Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
+---
+ .../devicetree/bindings/thermal/amlogic,thermal.yaml         | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/devicetree/bindings/thermal/amlogic,thermal.yaml b/Documentation/devicetree/bindings/thermal/amlogic,thermal.yaml
+index e72cb39ac635..43dda3978e2a 100644
+--- a/Documentation/devicetree/bindings/thermal/amlogic,thermal.yaml
++++ b/Documentation/devicetree/bindings/thermal/amlogic,thermal.yaml
+@@ -23,6 +23,7 @@ properties:
+           - const: amlogic,g12a-thermal
+       - enum:
+           - amlogic,a1-cpu-thermal
++          - amlogic,s7-thermal
+           - amlogic,t7-thermal
+ 
+   reg:
+@@ -84,7 +85,9 @@ allOf:
+       properties:
+         compatible:
+           contains:
+-            const: amlogic,t7-thermal
++            enum:
++              - amlogic,s7-thermal
++              - amlogic,t7-thermal
+     then:
+       properties:
+         clocks:

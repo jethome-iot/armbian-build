@@ -1,0 +1,148 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Viacheslav Bocharov <v@baodeep.com>
+Date: Tue, 24 Nov 2026 15:55:12 +0300
+Subject: [PATCH 508/508] thermal/drivers/amlogic: add S7 support
+
+The S7 temperature sensor reads like the T7 one, with the calibration
+from the secure monitor, but its firmware call differs: it returns a
+status and puts the trim in the secure monitor output buffer. Bit 31 of
+the trim marks a calibrated part.
+
+S7 also needs its own conversion parameters. The vendor firmware uses
+one set for parts whose trim carries a calibration revision in bits
+30:28 and another set for parts without one.
+
+Read the S7 trim from the output buffer, reject an uncalibrated sensor,
+and pick the parameter set from the trim at probe.
+
+Signed-off-by: Viacheslav Bocharov <v@baodeep.com>
+---
+ drivers/thermal/amlogic_thermal.c | 59 +++++++++++++++++++++++++++++--
+ 1 file changed, 57 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/thermal/amlogic_thermal.c b/drivers/thermal/amlogic_thermal.c
+index 60728de6968a..c50373c98d02 100644
+--- a/drivers/thermal/amlogic_thermal.c
++++ b/drivers/thermal/amlogic_thermal.c
+@@ -60,6 +60,8 @@
+ 	FIELD_GET(TSENSOR_TRIM_VERSION_MASK, _version)
+ 
+ #define TSENSOR_TRIM_CALIB_VALID_MASK	(GENMASK(3, 2) | BIT(7))
++#define TSENSOR_TRIM_CALIB_REV_MASK	GENMASK(30, 28)
++#define TSENSOR_TRIM_CALIBRATED		BIT(31)
+ 
+ #define TSENSOR_CALIB_OFFSET	1
+ #define TSENSOR_CALIB_SHIFT	4
+@@ -84,20 +86,27 @@ struct amlogic_thermal_soc_calib_data {
+  * struct amlogic_thermal_data
+  * @u_efuse_off: register offset to read fused calibration value
+  * @calibration_parameters: calibration parameters structure pointer
++ * @calibration_parameters_rev0: calibration parameters for parts whose trim
++ *	has no calibration revision (bits 30:28 clear), or NULL
+  * @regmap_config: regmap config for the device
+  * @use_sm: read data from secure monitor instead of efuse
++ * @sm_trim_in_shmem: the secure monitor returns a status and puts the
++ *	calibration data in its output buffer
+  * This structure is required for configuration of amlogic thermal driver.
+  */
+ struct amlogic_thermal_data {
+ 	int u_efuse_off;
+ 	const struct amlogic_thermal_soc_calib_data *calibration_parameters;
++	const struct amlogic_thermal_soc_calib_data *calibration_parameters_rev0;
+ 	const struct regmap_config *regmap_config;
+ 	bool use_sm;
++	bool sm_trim_in_shmem;
+ };
+ 
+ struct amlogic_thermal {
+ 	struct platform_device *pdev;
+ 	const struct amlogic_thermal_data *data;
++	const struct amlogic_thermal_soc_calib_data *calib;
+ 	struct regmap *regmap;
+ 	struct regmap *sec_ao_map;
+ 	struct clk_bulk_data *clks;
+@@ -115,8 +124,7 @@ struct amlogic_thermal {
+ static int amlogic_thermal_code_to_millicelsius(struct amlogic_thermal *pdata,
+ 						int temp_code)
+ {
+-	const struct amlogic_thermal_soc_calib_data *param =
+-					pdata->data->calibration_parameters;
++	const struct amlogic_thermal_soc_calib_data *param = pdata->calib;
+ 	int temp;
+ 	s64 factor, uptat, uefuse;
+ 
+@@ -203,6 +211,21 @@ static int amlogic_thermal_probe_sm(struct platform_device *pdev,
+ 
+ 	pdata->tsensor_id = ph_args.args[0];
+ 
++	if (pdata->data->sm_trim_in_shmem) {
++		ret = meson_sm_call_read(pdata->sm_fw, &pdata->trim_info,
++					 sizeof(pdata->trim_info),
++					 SM_THERMAL_CALIB_READ,
++					 pdata->tsensor_id, 0, 0, 0, 0);
++		if (ret < 0)
++			return dev_err_probe(dev, ret,
++					     "failed to read the calibration\n");
++		if (!(pdata->trim_info & TSENSOR_TRIM_CALIBRATED))
++			return dev_err_probe(dev, -ENODEV,
++					     "sensor not calibrated: 0x%08x\n",
++					     pdata->trim_info);
++		return 0;
++	}
++
+ 	return meson_sm_get_thermal_calib(pdata->sm_fw,
+ 					  &pdata->trim_info,
+ 					  pdata->tsensor_id);
+@@ -279,6 +302,28 @@ static const struct amlogic_thermal_data amlogic_thermal_t7_param = {
+ 	.regmap_config		= &amlogic_thermal_regmap_config_g12a,
+ };
+ 
++static const struct amlogic_thermal_soc_calib_data amlogic_thermal_s7 = {
++	.A = 8739,
++	.B = 2907,
++	.m = 396,
++	.n = 296,
++};
++
++static const struct amlogic_thermal_soc_calib_data amlogic_thermal_s7_rev0 = {
++	.A = 8526,
++	.B = 2757,
++	.m = 396,
++	.n = 296,
++};
++
++static const struct amlogic_thermal_data amlogic_thermal_s7_param = {
++	.use_sm				= true,
++	.calibration_parameters		= &amlogic_thermal_s7,
++	.calibration_parameters_rev0	= &amlogic_thermal_s7_rev0,
++	.regmap_config			= &amlogic_thermal_regmap_config_g12a,
++	.sm_trim_in_shmem		= true,
++};
++
+ static const struct of_device_id of_amlogic_thermal_match[] = {
+ 	{
+ 		.compatible = "amlogic,g12a-ddr-thermal",
+@@ -292,6 +337,10 @@ static const struct of_device_id of_amlogic_thermal_match[] = {
+ 		.compatible = "amlogic,a1-cpu-thermal",
+ 		.data = &amlogic_thermal_a1_cpu_param,
+ 	},
++	{
++		.compatible = "amlogic,s7-thermal",
++		.data = &amlogic_thermal_s7_param,
++	},
+ 	{
+ 		.compatible = "amlogic,t7-thermal",
+ 		.data = &amlogic_thermal_t7_param,
+@@ -336,6 +385,12 @@ static int amlogic_thermal_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		return ret;
+ 
++	pdata->calib = pdata->data->calibration_parameters;
++	if (pdata->data->calibration_parameters_rev0 &&
++	    !(pdata->trim_info & TSENSOR_TRIM_CALIB_REV_MASK))
++		pdata->calib = pdata->data->calibration_parameters_rev0;
++	dev_dbg(dev, "trim info 0x%08x\n", pdata->trim_info);
++
+ 	pdata->tzd = devm_thermal_of_zone_register(&pdev->dev,
+ 						   0,
+ 						   pdata,
